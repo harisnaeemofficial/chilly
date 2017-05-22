@@ -54,7 +54,7 @@ public class IconHeaderItemPresenter extends RowHeaderPresenter {
         rootView.setFocusable(true);
 
         ImageView iconView = (ImageView) rootView.findViewById(R.id.header_icon);
-        Drawable icon = rootView.getResources().getDrawable(R.drawable.android_header, null);
+        Drawable icon = rootView.getResources().getDrawable(R.drawable.icon_movies, null);
         iconView.setImageDrawable(icon);
 
         TextView label = (TextView) rootView.findViewById(R.id.header_label);
