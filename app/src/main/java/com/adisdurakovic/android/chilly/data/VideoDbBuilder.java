@@ -45,7 +45,7 @@ import java.util.List;
  */
 public class VideoDbBuilder {
     public static final String TAG_MEDIA = "videos";
-    public static final String TAG_GOOGLE_VIDEOS = "googlevideos";
+    public static final String TAG_CHILLY_VIDEOS = "chillyvideos";
     public static final String TAG_CATEGORY = "category";
     public static final String TAG_STUDIO = "studio";
     public static final String TAG_SOURCES = "sources";
@@ -57,6 +57,7 @@ public class VideoDbBuilder {
     private static final String TAG = "VideoDbBuilder";
 
     private Context mContext;
+    private Chilly chilly;
 
     /**
      * Default constructor that can be used for tests
@@ -67,27 +68,37 @@ public class VideoDbBuilder {
 
     public VideoDbBuilder(Context mContext) {
         this.mContext = mContext;
+        chilly = new Chilly(mContext);
     }
 
     /**
      * Fetches JSON data representing videos from a server and populates that in a database
-     * @param url The location of the video list
      */
-    public @NonNull List<ContentValues> fetch(String url)
+    public @NonNull List<ContentValues> fetch()
             throws IOException, JSONException {
 
-
-//        JSONObject videoData = fetchJSON(url);
-
-        Chilly chilly = new Chilly(mContext);
-        JSONObject chillyData = chilly.getPopularMovies();
+        JSONObject chillyData = new JSONObject();
+        JSONArray popularMovies = chilly.getDataFromIMDB("Movies popular", mContext.getResources().getString(R.string.imdb_url_movies_popular), mContext.getResources().getString(R.string.trakt_api_url_movie_info), mContext.getResources().getString(R.string.fanart_api_url_movies), "tmdb");
+        JSONArray popularTVShows = chilly.getDataFromIMDB("TV Shows popular", mContext.getResources().getString(R.string.imdb_url_tvshows_popular), mContext.getResources().getString(R.string.trakt_api_url_tvshow_info), mContext.getResources().getString(R.string.fanart_api_url_tvshows), "tvdb");
+        chillyData.put("chillyvideos", concatArray(popularMovies, popularTVShows));
+//        chillyData.put("chillyvideos", popularMovies);
 
 
         return buildMedia(chillyData);
 
-
-//        return buildMedia(videoData);
     }
+
+    private JSONArray concatArray(JSONArray... arrs)
+            throws JSONException {
+        JSONArray result = new JSONArray();
+        for (JSONArray arr : arrs) {
+            for (int i = 0; i < arr.length(); i++) {
+                result.put(arr.get(i));
+            }
+        }
+        return result;
+    }
+
 
     /**
      * Takes the contents of a JSON object and populates the database
@@ -96,7 +107,7 @@ public class VideoDbBuilder {
      */
     public List<ContentValues> buildMedia(JSONObject jsonObj) throws JSONException {
 
-        JSONArray categoryArray = jsonObj.getJSONArray(TAG_GOOGLE_VIDEOS);
+        JSONArray categoryArray = jsonObj.getJSONArray(TAG_CHILLY_VIDEOS);
 
         List<ContentValues> videosToInsert = new ArrayList<>();
 

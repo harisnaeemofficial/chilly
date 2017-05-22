@@ -59,6 +59,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.adisdurakovic.android.chilly.data.StreamGrabber;
 import com.adisdurakovic.android.chilly.data.Stream_123movieshd;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
@@ -402,16 +403,19 @@ class StreamTask extends AsyncTask<String, String, String> {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
+        Toast.makeText(activity, fragment.getResources()
+                .getString(R.string.playback_getsources), Toast.LENGTH_SHORT).show();
     }
 
     // Checking login in background
     protected String doInBackground(String... params) {
-        streamurl = "init";
+
         try {
-            streamurl =  Stream_123movieshd.getMovieStreamURL(mSelectedVideo);
+            streamurl = StreamGrabber.getLastSource(mSelectedVideo);
         } catch (IOException e) {
 
         }
+
         return streamurl;
 
     }
@@ -420,10 +424,16 @@ class StreamTask extends AsyncTask<String, String, String> {
     protected void onPostExecute(String file_url) {
         // dismiss the dialog once done
         System.out.println(streamurl);
-        mSelectedVideo.videoUrl = streamurl;
-        Intent intent = new Intent(this.activity, PlaybackOverlayActivity.class);
-        intent.putExtra(VideoDetailsActivity.VIDEO, this.mSelectedVideo);
-        fragment.startActivity(intent);
+        if(streamurl == "") {
+            Toast.makeText(activity, fragment.getResources()
+                    .getString(R.string.playback_nosources), Toast.LENGTH_SHORT).show();
+        } else {
+            mSelectedVideo.videoUrl = streamurl;
+            Intent intent = new Intent(this.activity, PlaybackOverlayActivity.class);
+            intent.putExtra(VideoDetailsActivity.VIDEO, this.mSelectedVideo);
+            fragment.startActivity(intent);
+        }
+
 
     }
 }

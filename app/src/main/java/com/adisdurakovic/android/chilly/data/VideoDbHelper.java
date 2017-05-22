@@ -82,7 +82,7 @@ public class VideoDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onOpen(SQLiteDatabase db) {
-//        db.execSQL("DROP TABLE IF EXISTS " + VideoEntry.TABLE_NAME);
-//        onCreate(db);
+        db.execSQL("DROP TABLE IF EXISTS " + VideoEntry.TABLE_NAME);
+        onCreate(db);
     }
 }

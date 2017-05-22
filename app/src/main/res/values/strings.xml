@@ -41,15 +41,18 @@
     <string name="catalog_url">https://codecraft.at/tv.json</string>
 
     <!--IMDB -->
-    <string name="imdb_url_movies_popular">http://www.imdb.com/search/title?title_type=feature,tv_movie&amp;num_votes=1000,&amp;production_status=released&amp;release_date=date[365],date[60]&amp;sort=moviemeter,asc&amp;count=40&amp;start=1</string>
+    <string name="imdb_url_movies_popular"><![CDATA[http://www.imdb.com/search/title?title_type=feature,tv_movie&num_votes=1000,&production_status=released&release_date=date%5B365%5D,date%5B60%5D&count=10&start=1&view=advanced&sort=moviemeter,asc]]></string>
+    <string name="imdb_url_tvshows_popular"><![CDATA[http://www.imdb.com/search/title?title_type=tv_series,mini_series&num_votes=100,&release_date=,date[0]&sort=moviemeter,asc&count=10&start=1]]></string>
 
     <!--Trakt -->
     <string name="trakt_api_url_movie_info">https://api.trakt.tv/movies/%1$s?extended=full</string>
+    <string name="trakt_api_url_tvshow_info">https://api.trakt.tv/shows/%1$s?extended=full</string>
     <string name="trakt_api_version">2</string>
     <string name="trakt_api_key">0382d8815ebf303ee57a69a88b02348afaf40bcb39b7053da6bb2da36ee800a3</string>
 
     <!-- Fanart -->
     <string name="fanart_api_url_movies">http://webservice.fanart.tv/v3/movies/%1$s</string>
+    <string name="fanart_api_url_tvshows">http://webservice.fanart.tv/v3/tv/%1$s</string>
     <string name="fanart_api_key">aa30289d6d9b69b58b1958ef16939ea3</string>
 
     <!-- Error messages -->
@@ -135,4 +138,8 @@
     <string name="pref_title_password">Password</string>
     <string name="pref_key_login">pref_login</string>
     <string name="pref_title_login">Login</string>
+
+
+    <string name="playback_getsources">Fetching sources...</string>
+    <string name="playback_nosources">No sources found!</string>
 </resources>
