@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class Chilly {
         mContext = ctx;
     }
 
-    public JSONObject getPopularMovies() throws JSONException {
+    public JSONObject getPopularMovies() throws JSONException, IOException {
 
         JSONObject list = new JSONObject();
 
@@ -39,62 +40,50 @@ public class Chilly {
         for(Iterator<String> i = imdb_popular_movies.iterator(); i.hasNext();) {
 
             x++;
-//
 
-                String imdb_id = i.next();
-                String trakt_url = String.format(mContext.getResources().getString(R.string.trakt_api_url_movie_info), imdb_id);
-                JSONObject trakt_info = TraktGrabber.getInfo(trakt_url, mContext.getResources().getString(R.string.trakt_api_version), mContext.getResources().getString(R.string.trakt_api_key));
-                String fanart_url = String.format(mContext.getResources().getString(R.string.fanart_api_url_movies), trakt_info.getJSONObject("ids").getString("tmdb")) + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
-                JSONObject fanart_media = FanartGrabber.getMedia(fanart_url);
-//                System.out.println(fanart_url);
-                JSONArray moviebackground;
-                JSONArray movieposter;
+            String imdb_id = i.next();
+            String trakt_url = String.format(mContext.getResources().getString(R.string.trakt_api_url_movie_info), imdb_id);
+            JSONObject trakt_info = TraktGrabber.getInfo(trakt_url, mContext.getResources().getString(R.string.trakt_api_version), mContext.getResources().getString(R.string.trakt_api_key));
+            String fanart_url = String.format(mContext.getResources().getString(R.string.fanart_api_url_movies), trakt_info.getJSONObject("ids").getString("tmdb")) + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+            JSONObject fanart_media = FanartGrabber.getMedia(fanart_url);
+            JSONArray moviebackground;
+            JSONArray movieposter;
 
-                String poster = "";
-                String background = "";
+            String poster = "";
+            String background = "";
 
-                movieposter = fanart_media.optJSONArray("movieposter");
-                moviebackground = fanart_media.optJSONArray("moviebackground");
+            movieposter = fanart_media.optJSONArray("movieposter");
+            moviebackground = fanart_media.optJSONArray("moviebackground");
 
-                if(moviebackground != null) {
-                    background = moviebackground.optJSONObject(0).optString("url");
-                }
+            if(moviebackground != null) {
+                background = moviebackground.optJSONObject(0).optString("url");
+            }
 
-                if(movieposter != null) {
-                    poster = movieposter.getJSONObject(0).optString("url");
-                    // set english poster
-                    for(int j = 0; j < movieposter.length(); j++) {
-                        if(movieposter.optJSONObject(j).optString("lang") == "en") {
-                            poster = movieposter.getJSONObject(j).optString("url");
-                            break;
-                        }
+            if(movieposter != null) {
+                poster = movieposter.getJSONObject(0).optString("url");
+                // set english poster
+                for(int j = 0; j < movieposter.length(); j++) {
+                    if(movieposter.optJSONObject(j).optString("lang") == "en") {
+                        poster = movieposter.getJSONObject(j).optString("url");
+                        break;
                     }
                 }
+            }
 
 
             JSONObject elem = new JSONObject();
 
-                elem.put("title", trakt_info.optString("title"));
-                elem.put("description", trakt_info.optString("overview"));
-                elem.put("card", poster);
-                elem.put("background", background);
-                elem.put("studio", "Chilly");
-                JSONArray sources = new JSONArray();
-                sources.put("https://nowhere" + x + ".mp4");
-                elem.put("sources", sources);
+            elem.put("title", trakt_info.optString("title"));
+            elem.put("description", trakt_info.optString("overview"));
+            elem.put("card", poster);
+            elem.put("background", background);
+            elem.put("studio", trakt_info.optString("year"));
+            JSONArray sources = new JSONArray();
+            sources.put("https://nowhere" + x + ".mp4");
+            elem.put("sources", sources);
 
-//            elem.put("title", "Instant Upload");
-//            elem.put("description", "Jon introduces Instant Upload with a few thoughts on how we remember the things that matter. Check out some ways we've been rethinking real-life sharing for the web at plus.google.com");
-//            elem.put("card", "https://storage.googleapis.com/android-tv/Sample%20videos/Google%2B/Google%2B_%20Instant%20Upload/card.jpg");
-//            elem.put("background", "https://storage.googleapis.com/android-tv/Sample%20videos/Google%2B/Google%2B_%20Instant%20Upload/bg.jpg");
-//            elem.put("studio", "Google+");
-//            JSONArray sources = new JSONArray();
-//            sources.put("test");
-//            elem.put("sources", sources);
 
             videos.put(elem);
-
-
 
         }
 

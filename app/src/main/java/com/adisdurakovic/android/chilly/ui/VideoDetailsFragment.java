@@ -16,6 +16,7 @@
 
 package com.adisdurakovic.android.chilly.ui;
 
+import android.app.Activity;
 import android.app.LoaderManager;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -27,6 +28,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.DetailsFragment;
@@ -57,6 +59,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.adisdurakovic.android.chilly.data.Stream_123movieshd;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -67,6 +70,8 @@ import com.adisdurakovic.android.chilly.model.VideoCursorMapper;
 import com.adisdurakovic.android.chilly.presenter.CardPresenter;
 import com.adisdurakovic.android.chilly.presenter.DetailsDescriptionPresenter;
 
+import java.io.IOException;
+
 /*
  * VideoDetailsFragment extends DetailsFragment, a Wrapper fragment for leanback details screens.
  * It shows a detailed view of video and its metadata plus related videos.
@@ -74,9 +79,9 @@ import com.adisdurakovic.android.chilly.presenter.DetailsDescriptionPresenter;
 public class VideoDetailsFragment extends DetailsFragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final int NO_NOTIFICATION = -1;
-    private static final int ACTION_WATCH_TRAILER = 1;
-    private static final int ACTION_RENT = 2;
-    private static final int ACTION_BUY = 3;
+    private static final int ACTION_PLAY_NOW = 1;
+    private static final int ACTION_PLAY_FROM = 2;
+    private static final int ACTION_PLAY_TRAILER = 3;
 
     // ID for loader that loads related videos.
     private static final int RELATED_VIDEO_LOADER = 1;
@@ -192,14 +197,15 @@ public class VideoDetailsFragment extends DetailsFragment
         detailsPresenter.setListener(mHelper);
         detailsPresenter.setParticipatingEntranceTransition(false);
         prepareEntranceTransition();
-
+        final VideoDetailsFragment mFragment = this;
         detailsPresenter.setOnActionClickedListener(new OnActionClickedListener() {
             @Override
             public void onActionClicked(Action action) {
-                if (action.getId() == ACTION_WATCH_TRAILER) {
-                    Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
-                    intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
-                    startActivity(intent);
+                if (action.getId() == ACTION_PLAY_NOW) {
+//                    Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
+//                    intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
+//                    startActivity(intent);
+                    new StreamTask(getActivity(), mFragment, mSelectedVideo).execute();
                 } else {
                     Toast.makeText(getActivity(), action.toString(), Toast.LENGTH_SHORT).show();
                 }
@@ -334,10 +340,10 @@ public class VideoDetailsFragment extends DetailsFragment
 
         SparseArrayObjectAdapter adapter = new SparseArrayObjectAdapter();
 
-        adapter.set(ACTION_WATCH_TRAILER, new Action(ACTION_WATCH_TRAILER, getResources()
+        adapter.set(ACTION_PLAY_NOW, new Action(ACTION_PLAY_NOW, getResources()
                 .getString(R.string.play_now)));
-        adapter.set(ACTION_RENT, new Action(ACTION_RENT, getResources().getString(R.string.play_from)));
-        adapter.set(ACTION_BUY, new Action(ACTION_BUY, getResources().getString(R.string.play_trailer)));
+        adapter.set(ACTION_PLAY_FROM, new Action(ACTION_PLAY_FROM, getResources().getString(R.string.play_from)));
+        adapter.set(ACTION_PLAY_TRAILER, new Action(ACTION_PLAY_TRAILER, getResources().getString(R.string.play_trailer)));
         row.setActionsAdapter(adapter);
 
         mAdapter.add(row);
@@ -374,5 +380,50 @@ public class VideoDetailsFragment extends DetailsFragment
                 getActivity().startActivity(intent, bundle);
             }
         }
+    }
+}
+
+
+// Background ASYNC Task to login by making HTTP Request
+class StreamTask extends AsyncTask<String, String, String> {
+
+    private final Activity activity;
+    private final Video mSelectedVideo;
+    private final VideoDetailsFragment fragment;
+    String streamurl = "";
+
+    public StreamTask(Activity activity, VideoDetailsFragment fragment, Video video) {
+        this.activity = activity;
+        this.mSelectedVideo = video;
+        this.fragment = fragment;
+    }
+
+    // Before starting background thread Show Progress Dialog
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+    }
+
+    // Checking login in background
+    protected String doInBackground(String... params) {
+        streamurl = "init";
+        try {
+            streamurl =  Stream_123movieshd.getMovieStreamURL(mSelectedVideo);
+        } catch (IOException e) {
+
+        }
+        return streamurl;
+
+    }
+
+    // After completing background task Dismiss the progress dialog
+    protected void onPostExecute(String file_url) {
+        // dismiss the dialog once done
+        System.out.println(streamurl);
+        mSelectedVideo.videoUrl = streamurl;
+        Intent intent = new Intent(this.activity, PlaybackOverlayActivity.class);
+        intent.putExtra(VideoDetailsActivity.VIDEO, this.mSelectedVideo);
+        fragment.startActivity(intent);
+
     }
 }

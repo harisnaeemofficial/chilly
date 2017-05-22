@@ -1,5 +1,6 @@
 package com.adisdurakovic.android.chilly.data;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -13,40 +14,16 @@ import java.net.HttpURLConnection;
 
 public class FanartGrabber {
 
-    public static JSONObject getMedia(String url) {
+    public static JSONObject getMedia(String url) throws IOException, JSONException {
 
-        JSONObject media = null;
+        JSONObject media;
 
-        BufferedReader reader = null;
 
-        try {
-            HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
-            urlConnection.setRequestMethod("GET");
+        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
+        urlConnection.setRequestMethod("GET");
 
-            try {
-                reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(),
-                        "utf-8"));
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line);
-                }
+        media = new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
 
-                media = new JSONObject(sb.toString());
-
-            } finally {
-                urlConnection.disconnect();
-                if (null != reader) {
-                    try {
-                        reader.close();
-                    } catch (IOException e) {
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-
-        }
 
         return media;
     }

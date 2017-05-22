@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -22,47 +23,26 @@ import java.util.List;
 public class IMDBGrabber {
 
 
-    public static List<String> getList(String url) {
+    public static List<String> getList(String url) throws IOException {
 
         List<String> list = new ArrayList<>();
 
-        BufferedReader reader = null;
+        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
+        urlConnection.setRequestMethod("GET");
 
-        try {
-            HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
+        String html = HTTPGrabber.getContentFromURL(urlConnection);
 
-            try {
-                reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(),
-                        "utf-8"));
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line);
-                }
+        Document doc = Jsoup.parse(html);
+        Elements itemLinks = doc.select("h3.lister-item-header a");
 
-                Document doc = Jsoup.parse(sb.toString());
-                Elements itemLinks = doc.select("h3.lister-item-header a");
-
-                for(Iterator<Element> i = itemLinks.iterator(); i.hasNext();) {
-                    Element item = i.next();
-                    String itemlink = item.attr("href");
-                    String imdb_id = itemlink.toString().replace("/?ref_=adv_li_tt", "").replace("/title/", "");
-                    list.add(imdb_id);
-                }
-
-            } finally {
-                urlConnection.disconnect();
-                if (null != reader) {
-                    try {
-                        reader.close();
-                    } catch (IOException e) {
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-
+        for(Iterator<Element> i = itemLinks.iterator(); i.hasNext();) {
+            Element item = i.next();
+            String itemlink = item.attr("href");
+            String imdb_id = itemlink.toString().replace("/?ref_=adv_li_tt", "").replace("/title/", "");
+            list.add(imdb_id);
         }
+
+
 
         return list;
     }

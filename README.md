@@ -1,4 +1,4 @@
-# Android TV Leanback Support Library sample - Videos by Google
+# chill.y
 
 [![Join the chat at https://gitter.im/googlesamples/androidtv-Leanback](https://badges.gitter.im/googlesamples/androidtv-Leanback.svg)](https://gitter.im/googlesamples/androidtv-Leanback?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -41,7 +41,7 @@ Need more information about getting started with Android TV? Check the [official
 
 ## Screenshots
 
-[![Screenshot](screenshots/atv-leanback-all.png)](https://raw.githubusercontent.com/googlesamples/androidtv-Leanback/master/screenshots/atv-leanback-all.png)
+[![Screenshot](screenshots/atv-leanback-all.png)](https://raw.githubusercontent.com/ad-on-is/chilly/master/screenshots/atv-leanback-all.png)
 
 ## Support
 

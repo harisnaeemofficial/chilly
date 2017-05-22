@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.adisdurakovic.android.chilly.R;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -22,42 +23,18 @@ import java.util.Iterator;
 
 public class TraktGrabber {
 
-    public static JSONObject getInfo(String url, String api_version, String api_key) {
+    public static JSONObject getInfo(String url, String api_version, String api_key) throws IOException, JSONException {
 
-        JSONObject info = null;
+        JSONObject info;
 
-        BufferedReader reader = null;
+        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
+        urlConnection.setRequestMethod("GET");
+        urlConnection.setRequestProperty("Content-Type", "application/json");
+        urlConnection.setRequestProperty("trakt-api-version", api_version);
+        urlConnection.setRequestProperty("trakt-api-key", api_key);
 
-        try {
-            HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
-            urlConnection.setRequestMethod("GET");
-            urlConnection.setRequestProperty("Content-Type", "application/json");
-            urlConnection.setRequestProperty("trakt-api-version", api_version);
-            urlConnection.setRequestProperty("trakt-api-key", api_key);
-            try {
-                reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(),
-                        "utf-8"));
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line);
-                }
+        info = new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
 
-                info = new JSONObject(sb.toString());
-
-            } finally {
-                urlConnection.disconnect();
-                if (null != reader) {
-                    try {
-                        reader.close();
-                    } catch (IOException e) {
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-
-        }
 
         return info;
 
