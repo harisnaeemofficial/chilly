@@ -18,8 +18,11 @@ package com.adisdurakovic.android.chilly.presenter;
 
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.support.v17.leanback.app.BrowseFragment;
+import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.AppCompatTextView;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -28,7 +31,9 @@ import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.ui.MainFragment;
 
 public class GridItemPresenter extends Presenter {
-    private final MainFragment mainFragment;
+    private final BrowseFragment mainFragment;
+    private int mSelectedBackgroundColor = -1;
+    private int mDefaultBackgroundColor = -1;
 
     public GridItemPresenter(MainFragment mainFragment) {
         this.mainFragment = mainFragment;
@@ -36,7 +41,19 @@ public class GridItemPresenter extends Presenter {
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
-        TextView view = new TextView(parent.getContext());
+
+        mDefaultBackgroundColor =
+                ContextCompat.getColor(parent.getContext(), R.color.default_background);
+        mSelectedBackgroundColor =
+                ContextCompat.getColor(parent.getContext(), R.color.selected_background);
+
+        TextView view = new AppCompatTextView(parent.getContext()) {
+            @Override
+            public void setSelected(boolean selected) {
+                updateGridItemBackgroundColor(this, selected);
+                super.setSelected(selected);
+            }
+        };
 
         Resources res = parent.getResources();
         int width = res.getDimensionPixelSize(R.dimen.grid_item_width);
@@ -52,6 +69,15 @@ public class GridItemPresenter extends Presenter {
         return new ViewHolder(view);
     }
 
+    private void updateGridItemBackgroundColor(AppCompatTextView view, boolean selected) {
+        int color = selected ? mSelectedBackgroundColor : mDefaultBackgroundColor;
+
+        // Both background colors should be set because the view's
+        // background is temporarily visible during animations.
+        view.setBackgroundColor(color);
+//        view.findViewById(R.id.info_field).setBackgroundColor(color);
+    }
+
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, Object item) {
         ((TextView) viewHolder.view).setText((String) item);
@@ -60,4 +86,5 @@ public class GridItemPresenter extends Presenter {
     @Override
     public void onUnbindViewHolder(ViewHolder viewHolder) {
     }
+
 }

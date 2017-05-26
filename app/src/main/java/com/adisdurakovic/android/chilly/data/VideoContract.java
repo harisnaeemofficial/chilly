@@ -65,6 +65,9 @@ public final class VideoContract {
         // The studio name.
         public static final String COLUMN_STUDIO = "studio";
 
+        // The studio name.
+        public static final String COLUMN_VIDEO_TYPE = "videotype";
+
         // The card image for the video.
         public static final String COLUMN_CARD_IMG = SearchManager.SUGGEST_COLUMN_RESULT_CARD_IMAGE;
 
@@ -97,6 +100,7 @@ public final class VideoContract {
 
         // The year the video was produced.
         public static final String COLUMN_PRODUCTION_YEAR = SearchManager.SUGGEST_COLUMN_PRODUCTION_YEAR;
+
 
         // The duration of the video.
         public static final String COLUMN_DURATION = SearchManager.SUGGEST_COLUMN_DURATION;

@@ -20,6 +20,10 @@ import android.media.MediaDescription;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * Video is an immutable object that holds the various metadata associated with a single video.
  */
@@ -32,6 +36,12 @@ public final class Video implements Parcelable {
     public final String cardImageUrl;
     public  String videoUrl;
     public final String studio;
+    public final String productionYear;
+    public final String videoType;
+    public String tvdb_id;
+    public String tmdb_id;
+    public String imdb_id;
+    public long airedEpisodes;
 
     private Video(
             final long id,
@@ -41,7 +51,13 @@ public final class Video implements Parcelable {
             final String videoUrl,
             final String bgImageUrl,
             final String cardImageUrl,
-            final String studio) {
+            final String studio,
+            final String productionYear,
+            final String videoType,
+            final String tvdb_id,
+            final String tmdb_id,
+            final String imdb_id,
+            final long airedEpisodes) {
         this.id = id;
         this.category = category;
         this.title = title;
@@ -50,6 +66,12 @@ public final class Video implements Parcelable {
         this.bgImageUrl = bgImageUrl;
         this.cardImageUrl = cardImageUrl;
         this.studio = studio;
+        this.productionYear = productionYear;
+        this.videoType = videoType;
+        this.tvdb_id = tvdb_id;
+        this.tmdb_id = tmdb_id;
+        this.imdb_id = imdb_id;
+        this.airedEpisodes = airedEpisodes;
     }
 
     protected Video(Parcel in) {
@@ -61,6 +83,12 @@ public final class Video implements Parcelable {
         cardImageUrl = in.readString();
         videoUrl = in.readString();
         studio = in.readString();
+        productionYear = in.readString();
+        videoType = in.readString();
+        tvdb_id = in.readString();
+        tmdb_id = in.readString();
+        imdb_id = in.readString();
+        airedEpisodes = in.readLong();
     }
 
     public static final Creator<Video> CREATOR = new Creator<Video>() {
@@ -94,6 +122,12 @@ public final class Video implements Parcelable {
         dest.writeString(cardImageUrl);
         dest.writeString(videoUrl);
         dest.writeString(studio);
+        dest.writeString(productionYear);
+        dest.writeString(videoType);
+        dest.writeString(tvdb_id);
+        dest.writeString(tmdb_id);
+        dest.writeString(imdb_id);
+        dest.writeLong(airedEpisodes);
     }
 
     @Override
@@ -105,7 +139,13 @@ public final class Video implements Parcelable {
         s += ", videoUrl='" + videoUrl + "'";
         s += ", bgImageUrl='" + bgImageUrl + "'";
         s += ", cardImageUrl='" + cardImageUrl + "'";
-        s += ", studio='" + cardImageUrl + "'";
+        s += ", studio='" + studio + "'";
+        s += ", productionYear='" + productionYear + "'";
+        s += ", videoType='" + videoType + "'";
+        s += ", tvdb_id='" + tvdb_id + "'";
+        s += ", tmdb_id='" + tmdb_id + "'";
+        s += ", imdb_id='" + imdb_id + "'";
+        s += ", airedEpisodes='" + airedEpisodes + "'";
         s += "}";
         return s;
     }
@@ -120,9 +160,35 @@ public final class Video implements Parcelable {
         private String cardImageUrl;
         private String videoUrl;
         private String studio;
+        private String productionYear;
+        private String videoType;
+        public String tvdb_id;
+        public String tmdb_id;
+        public String imdb_id;
+        public long airedEpisodes;
 
         public VideoBuilder id(long id) {
             this.id = id;
+            return this;
+        }
+
+        public VideoBuilder airedEpisodes(long airedEpisodes) {
+            this.airedEpisodes = airedEpisodes;
+            return this;
+        }
+
+        public VideoBuilder tvdb_id(String tvdb_id) {
+            this.tvdb_id = tvdb_id;
+            return this;
+        }
+
+        public VideoBuilder tmdb_id(String tmdb_id) {
+            this.tmdb_id = tmdb_id;
+            return this;
+        }
+
+        public VideoBuilder imdb_id(String imdb_id) {
+            this.imdb_id = imdb_id;
             return this;
         }
 
@@ -161,6 +227,17 @@ public final class Video implements Parcelable {
             return this;
         }
 
+        public VideoBuilder productionYear(String productionYear) {
+            this.productionYear = productionYear;
+            return this;
+        }
+
+        public VideoBuilder videoType(String videoType) {
+            this.videoType = videoType;
+            return this;
+        }
+
+
         public Video buildFromMediaDesc(MediaDescription desc) {
             return new Video(
                     Long.parseLong(desc.getMediaId()),
@@ -170,7 +247,13 @@ public final class Video implements Parcelable {
                     "", // Media URI - not provided by MediaDescription.
                     "", // Background Image URI - not provided by MediaDescription.
                     String.valueOf(desc.getIconUri()),
-                    String.valueOf(desc.getSubtitle())
+                    String.valueOf(desc.getSubtitle()),
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    0
             );
         }
 
@@ -183,7 +266,13 @@ public final class Video implements Parcelable {
                     videoUrl,
                     bgImageUrl,
                     cardImageUrl,
-                    studio
+                    studio,
+                    productionYear,
+                    videoType,
+                    tvdb_id,
+                    tmdb_id,
+                    imdb_id,
+                    airedEpisodes
             );
         }
     }

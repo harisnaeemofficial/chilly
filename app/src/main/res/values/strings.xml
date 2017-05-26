@@ -15,10 +15,16 @@
      limitations under the License.
 -->
 
+    <!DOCTYPE resources [
+        <!ENTITY trakt_api_url_base "https://api.trakt.tv">
+        <!ENTITY fanart_api_url_base "http://webservice.fanart.tv/v3">
+    ]>
+
 <resources>
     <string name="app_name"><![CDATA[Chilly]]></string>
     <string name="browse_title"><![CDATA[Chilly]]></string>
     <string name="related_movies">Related Videos</string>
+    <string name="tvshow_seasons">Seasons</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
 
     <string name="popular_header">Popular Videos</string>
@@ -45,14 +51,17 @@
     <string name="imdb_url_tvshows_popular"><![CDATA[http://www.imdb.com/search/title?title_type=tv_series,mini_series&num_votes=100,&release_date=,date[0]&sort=moviemeter,asc&count=10&start=1]]></string>
 
     <!--Trakt -->
-    <string name="trakt_api_url_movie_info">https://api.trakt.tv/movies/%1$s?extended=full</string>
-    <string name="trakt_api_url_tvshow_info">https://api.trakt.tv/shows/%1$s?extended=full</string>
     <string name="trakt_api_version">2</string>
     <string name="trakt_api_key">0382d8815ebf303ee57a69a88b02348afaf40bcb39b7053da6bb2da36ee800a3</string>
+    <string name="trakt_api_url">&trakt_api_url_base;</string>
+
+    <!-- TMDB -->
+    <string name="tmdb_api_url">https://api.themoviedb.org/3</string>
+    <string name="tmdb_api_key">7f278e56a85aa1aa3ead3db5cfffbc31</string>
+    <string name="tmdb_image_url">https://image.tmdb.org/t/p/w500</string>
 
     <!-- Fanart -->
-    <string name="fanart_api_url_movies">http://webservice.fanart.tv/v3/movies/%1$s</string>
-    <string name="fanart_api_url_tvshows">http://webservice.fanart.tv/v3/tv/%1$s</string>
+    <string name="fanart_api_url">&fanart_api_url_base;</string>
     <string name="fanart_api_key">aa30289d6d9b69b58b1958ef16939ea3</string>
 
     <!-- Error messages -->

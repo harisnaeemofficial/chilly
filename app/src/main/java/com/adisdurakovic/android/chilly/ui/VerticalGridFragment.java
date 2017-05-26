@@ -16,15 +16,20 @@
 
 package com.adisdurakovic.android.chilly.ui;
 
+import android.app.Activity;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.CursorObjectAdapter;
+import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ImageCardView;
+import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.OnItemViewClickedListener;
 import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
@@ -33,45 +38,80 @@ import android.support.v17.leanback.widget.RowPresenter;
 import android.support.v17.leanback.widget.VerticalGridPresenter;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.view.View;
+import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.R;
+import com.adisdurakovic.android.chilly.data.Chilly;
+import com.adisdurakovic.android.chilly.data.FetchVideoService;
 import com.adisdurakovic.android.chilly.data.VideoContract;
 import com.adisdurakovic.android.chilly.model.Video;
 import com.adisdurakovic.android.chilly.model.VideoCursorMapper;
 import com.adisdurakovic.android.chilly.presenter.CardPresenter;
+import com.adisdurakovic.android.chilly.presenter.GridItemPresenter;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /*
  * VerticalGridFragment shows a grid of videos that can be scrolled vertically.
  */
-public class VerticalGridFragment extends android.support.v17.leanback.app.VerticalGridFragment
-        implements LoaderManager.LoaderCallbacks<Cursor> {
+public class VerticalGridFragment extends android.support.v17.leanback.app.VerticalGridFragment {
 
     private static final int NUM_COLUMNS = 5;
     private final CursorObjectAdapter mVideoCursorAdapter =
             new CursorObjectAdapter(new CardPresenter());
     private static final int ALL_VIDEOS_LOADER = 1;
+    private ArrayObjectAdapter mEpisodeadapter;
+    private Video mSelectedShow;
+    private Video mSelectedSeason;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mVideoCursorAdapter.setMapper(new VideoCursorMapper());
-        setAdapter(mVideoCursorAdapter);
+//        mVideoCursorAdapter.setMapper(new VideoCursorMapper());
 
-        setTitle(getString(R.string.vertical_grid_title));
+//        setAdapter(mVideoCursorAdapter);
+
+        mSelectedShow = (Video) getActivity().getIntent()
+                .getParcelableExtra("tvshow");
+
+        mSelectedSeason = (Video) getActivity().getIntent()
+                .getParcelableExtra("season");
+
+        CardPresenter cp = new CardPresenter();
+
+        VerticalGridPresenter gridPresenter = new VerticalGridPresenter();
+        gridPresenter.setNumberOfColumns(5);
+
+
+        if(getActivity().getIntent().getStringExtra("display-list").equals("episodes-for-show-season")) {
+            cp.isEpisode = true;
+            gridPresenter.setNumberOfColumns(4);
+        }
+        mEpisodeadapter = new ArrayObjectAdapter(cp);
+        setAdapter(mEpisodeadapter);
+        setGridPresenter(gridPresenter);
 
         if (savedInstanceState == null) {
             prepareEntranceTransition();
         }
+
+
+
         setupFragment();
     }
 
     private void setupFragment() {
-        VerticalGridPresenter gridPresenter = new VerticalGridPresenter();
-        gridPresenter.setNumberOfColumns(NUM_COLUMNS);
-        setGridPresenter(gridPresenter);
 
-        getLoaderManager().initLoader(ALL_VIDEOS_LOADER, null, this);
+
+
+        new MovieTVShowLoader(this, mEpisodeadapter, getActivity().getIntent().getStringExtra("display-list"), mSelectedShow, mSelectedSeason).execute();
+
+//        getLoaderManager().initLoader(ALL_VIDEOS_LOADER, null, this);
+//        Intent serviceIntent = new Intent(getActivity(), FetchVideoService.class);
+//        getActivity().startService(serviceIntent);
 
         // After 500ms, start the animation to transition the cards into view.
         new Handler().postDelayed(new Runnable() {
@@ -92,29 +132,29 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(
-                getActivity(),
-                VideoContract.VideoEntry.CONTENT_URI,
-                null, // projection
-                null, // selection
-                null, // selection clause
-                null  // sort order
-        );
-    }
+//    @Override
+//    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+//        return new CursorLoader(
+//                getActivity(),
+//                VideoContract.VideoEntry.CONTENT_URI,
+//                null, // projection
+//                null, // selection
+//                null, // selection clause
+//                null  // sort order
+//        );
+//    }
 
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        if (loader.getId() == ALL_VIDEOS_LOADER && cursor != null && cursor.moveToFirst()) {
-            mVideoCursorAdapter.changeCursor(cursor);
-        }
-    }
+//    @Override
+//    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+//        if (loader.getId() == ALL_VIDEOS_LOADER && cursor != null && cursor.moveToFirst()) {
+//            mVideoCursorAdapter.changeCursor(cursor);
+//        }
+//    }
 
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        mVideoCursorAdapter.changeCursor(null);
-    }
+//    @Override
+//    public void onLoaderReset(Loader<Cursor> loader) {
+//        mVideoCursorAdapter.changeCursor(null);
+//    }
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
         @Override
@@ -141,5 +181,70 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
                 RowPresenter.ViewHolder rowViewHolder, Row row) {
         }
+    }
+}
+
+// Background ASYNC Task to login by making HTTP Request
+class MovieTVShowLoader extends AsyncTask<String, String, String> {
+
+    private final Activity activity;
+    private final ArrayObjectAdapter mCategoryRowAdapter;
+    private final VerticalGridFragment fragment;
+    List<Video> video_list;
+    private String display_list;
+    private Video tvshow;
+    private Video tvseason;
+
+
+
+    public MovieTVShowLoader(VerticalGridFragment fragment, ArrayObjectAdapter adapter, String display_list, Video show, Video season) {
+        this.activity = fragment.getActivity();
+        this.mCategoryRowAdapter = adapter;
+        this.fragment = fragment;
+        this.video_list = new ArrayList<>();
+        this.display_list = display_list;
+        this.tvshow = show;
+        this.tvseason = season;
+    }
+
+    // Before starting background thread Show Progress Dialog
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+//        Toast.makeText(activity, "Loading...", Toast.LENGTH_SHORT).show();
+    }
+
+    // Checking login in background
+    protected String doInBackground(String... params) {
+
+
+        Chilly chilly = new Chilly(activity.getApplicationContext());
+
+        try {
+            switch(display_list) {
+                case "movies-trending":
+                    video_list = chilly.getTrendingMovies(40);
+//                    fragment.getActivity().setTitle("MOVIES: Trending");
+                    break;
+                case "tvshows-trending":
+                    video_list = chilly.getTrendingTVShows(40);
+//                    fragment.getActivity().setTitle("TV SHOWS: Trending");
+                    break;
+                case "episodes-for-show-season":
+                    video_list = chilly.getEpisodesForShowSeason(tvshow, tvseason);
+//                    fragment.getActivity().setTitle(tvshow.title + ": " + tvseason.title);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "";
+
+    }
+
+    // After completing background task Dismiss the progress dialog
+    protected void onPostExecute(String file_url) {
+        mCategoryRowAdapter.addAll(mCategoryRowAdapter.size(), video_list);
     }
 }

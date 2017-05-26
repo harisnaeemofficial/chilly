@@ -21,7 +21,6 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.util.Log;
 
-import com.adisdurakovic.android.chilly.R;
 
 import org.json.JSONException;
 

@@ -28,7 +28,7 @@ import com.adisdurakovic.android.chilly.data.VideoContract.VideoEntry;
 public class VideoDbHelper extends SQLiteOpenHelper {
 
     // Change this when you change the database schema.
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     // The name of our database.
     private static final String DATABASE_NAME = "chilly.db";
@@ -48,6 +48,7 @@ public class VideoDbHelper extends SQLiteOpenHelper {
                 VideoEntry.COLUMN_DESC + " TEXT NOT NULL, " +
                 VideoEntry.COLUMN_BG_IMAGE_URL + " TEXT NOT NULL, " +
                 VideoEntry.COLUMN_STUDIO + " TEXT NOT NULL, " +
+                VideoEntry.COLUMN_VIDEO_TYPE + " TEXT NOT NULL, " +
                 VideoEntry.COLUMN_CARD_IMG + " TEXT NOT NULL, " +
                 VideoEntry.COLUMN_CONTENT_TYPE + " TEXT NOT NULL, " +
                 VideoEntry.COLUMN_IS_LIVE + " INTEGER DEFAULT 0, " +
@@ -82,7 +83,7 @@ public class VideoDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onOpen(SQLiteDatabase db) {
-        db.execSQL("DROP TABLE IF EXISTS " + VideoEntry.TABLE_NAME);
-        onCreate(db);
+//        db.execSQL("DROP TABLE IF EXISTS " + VideoEntry.TABLE_NAME);
+//        onCreate(db);
     }
 }

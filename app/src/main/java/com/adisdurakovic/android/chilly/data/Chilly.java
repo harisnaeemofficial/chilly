@@ -1,22 +1,25 @@
 package com.adisdurakovic.android.chilly.data;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.os.AsyncTask;
+import android.os.Environment;
 
 import com.adisdurakovic.android.chilly.R;
+import com.adisdurakovic.android.chilly.model.Video;
+import com.bumptech.glide.disklrucache.DiskLruCache;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+
+import static android.os.Environment.isExternalStorageRemovable;
 
 /**
  * Created by add on 21/05/2017.
@@ -24,121 +27,179 @@ import java.util.List;
 
 public class Chilly {
 
-    Context mContext;
+    private Context mContext;
+    private Video tvshow;
+    private Video season;
 
-    Chilly(Context ctx) {
+    public Chilly(Context ctx) {
         mContext = ctx;
     }
 
-    public JSONArray getDataFromIMDB(String category, String i_url, String t_url, String f_url, String f_id) throws JSONException, IOException {
-
-
-        JSONObject list = new JSONObject();
-
-        JSONArray videolist = new JSONArray();
-        JSONObject videoelem = new JSONObject();
-        JSONArray videos = new JSONArray();
-
-
-        List<String> imdb_popular_movies = getIMDBList(i_url);
-
-
-        int x = 0;
-        for(Iterator<String> i = imdb_popular_movies.iterator(); i.hasNext();) {
-
-            x++;
-
-            String imdb_id = i.next();
-            String trakt_url = String.format(t_url, imdb_id);
-            JSONObject trakt_info = getTraktInfo(trakt_url, mContext.getResources().getString(R.string.trakt_api_version), mContext.getResources().getString(R.string.trakt_api_key));
-            String fanart_url = String.format(f_url, trakt_info.getJSONObject("ids").getString(f_id)) + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
-            JSONObject fanart_media = getFanart(fanart_url);
-
-
-            JSONObject elem = new JSONObject();
-
-            elem.put("title", trakt_info.optString("title"));
-            elem.put("description", trakt_info.optString("overview"));
-            elem.put("card", getPoster(fanart_media));
-            elem.put("background", getBackground(fanart_media));
-            elem.put("studio", trakt_info.optString("year"));
-
-            System.out.println(getBackground(fanart_media));
-
-            JSONArray sources = new JSONArray();
-            sources.put("https://nowhere" + trakt_info.optString("title") + ".mp4");
-
-            elem.put("sources", sources);
-
-
-            videos.put(elem);
-
-        }
-
-        videoelem.put("category", category);
-        videoelem.put("videos", videos);
-
-        videolist.put(videoelem);
-
-
-        return videolist;
-
-
+    public List<Video> getTrendingMovies(int limit) throws JSONException, IOException {
+        List<Video> list;
+        list = getVideos("movie", mContext.getResources().getString(R.string.trakt_api_url) + "/movies/trending?extended=full&page=1&limit=" + String.valueOf(limit));
+        return list;
     }
 
+    public List<Video> getTrendingTVShows(int limit) throws JSONException, IOException {
 
-    public List<String> getIMDBList(String url) throws IOException {
+        List<Video> list;
+        list = getVideos("tvshow", mContext.getResources().getString(R.string.trakt_api_url) + "/shows/trending?extended=full&page=1&limit=" + String.valueOf(limit));
+        return list;
+    }
 
-        List<String> list = new ArrayList<>();
+    public List<Video> getSeasonsForShow(Video stvshow) throws JSONException, IOException {
 
-        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
-        urlConnection.setRequestMethod("GET");
+        List<Video> list;
+        tvshow = stvshow;
+        list = getVideos("season", mContext.getResources().getString(R.string.trakt_api_url) + "/shows/" + tvshow.id + "/seasons?extended=full");
+        return list;
+    }
 
-        String html = HTTPGrabber.getContentFromURL(urlConnection);
+    public List<Video> getEpisodesForShowSeason(Video stvshow, Video sseason) throws JSONException, IOException {
 
-        Document doc = Jsoup.parse(html);
-        Elements itemLinks = doc.select("h3.lister-item-header a");
-
-        for(Iterator<Element> i = itemLinks.iterator(); i.hasNext();) {
-            Element item = i.next();
-            String itemlink = item.attr("href");
-            String imdb_id = itemlink.toString().replace("/?ref_=adv_li_tt", "").replace("/title/", "");
-            list.add(imdb_id);
-        }
-
-
+        List<Video> list;
+        tvshow = stvshow;
+        season = sseason;
+        String season_number = season.title.replace("Season ", "");
+        list = getVideos("episode", mContext.getResources().getString(R.string.trakt_api_url) + "/shows/" + tvshow.id + "/seasons/" + season_number + "?extended=full");
 
         return list;
     }
 
 
-    public JSONObject getTraktInfo(String url, String api_version, String api_key) throws IOException, JSONException {
+    private List<Video> getVideos(String type, String trakt_list_url) throws JSONException, IOException {
 
-        JSONObject info;
+        List<Video> videos = new ArrayList<>();
 
-        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
-        urlConnection.setRequestMethod("GET");
-        urlConnection.setRequestProperty("Content-Type", "application/json");
-        urlConnection.setRequestProperty("trakt-api-version", api_version);
-        urlConnection.setRequestProperty("trakt-api-key", api_key);
+        JSONArray data_list = getListFromTrakt(trakt_list_url);
+        System.out.println(trakt_list_url);
 
-        info = new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
+        for(int i = 0; i < data_list.length(); i++) {
+
+            JSONObject trakt_elem = null;
+            String fanart_url, tmdb_url = "";
+            JSONObject fanart_media, tmdb_media;
+            String poster = "";
+            String background = "";
+            String year = "";
+
+            switch (type) {
+                case "movie":
+                    trakt_elem = data_list.optJSONObject(i).optJSONObject("movie");
+                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + trakt_elem.optJSONObject("ids").optString("tmdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);;
+                    fanart_media = getDataFromFanart(fanart_url);
+                    poster = getPoster(fanart_media, "movieposter", "", "");
+                    background = getBackground(fanart_media, "moviebackground");
+                    year = trakt_elem.optString("year");
+                    break;
+                case "tvshow":
+                    trakt_elem = data_list.optJSONObject(i).optJSONObject("show");
+                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + trakt_elem.optJSONObject("ids").optString("tvdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);;
+                    fanart_media = getDataFromFanart(fanart_url);
+                    poster = getPoster(fanart_media, "tvposter", "", "");
+                    background = getBackground(fanart_media, "showbackground");
+                    year = trakt_elem.optString("year");
+                    break;
+                case "season":
+                    trakt_elem = data_list.optJSONObject(i);
+                    if(trakt_elem.optString("number").equals("0")) continue;
+                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+                    fanart_media = getDataFromFanart(fanart_url);
+                    poster = getPoster(fanart_media, "seasonposter", "tvposter", trakt_elem.optString("number"));
+                    background = getBackground(fanart_media, "showbackground");
+                    year = trakt_elem.optString("first_aired").substring(0, 4);
+                    break;
+                case "episode":
+                    trakt_elem = data_list.optJSONObject(i);
+                    if(trakt_elem.optString("number").equals("0")) continue;
+                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+                    fanart_media = getDataFromFanart(fanart_url);
+                    tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/tv/" + tvshow.tmdb_id + "/season/" + trakt_elem.optString("season") + "/episode/" + trakt_elem.optString("number") + "/images?language=en-US&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key);;
+                    tmdb_media = getDataFromTMDB(tmdb_url);
+                    System.out.println(tmdb_url);
+                    poster = mContext.getResources().getString(R.string.tmdb_image_url) + tmdb_media.optJSONArray("stills").optJSONObject(0).optString("file_path");
+                    background = getBackground(fanart_media, "showbackground");
+                    year = "S" + zeroAppended(trakt_elem.optString("season")) + "E" + zeroAppended(trakt_elem.optString("number"));
+                    break;
+            }
 
 
-        return info;
+
+            String network = "";
+            if(trakt_elem.optString("network") != null) {
+                network = trakt_elem.optString("network");
+            }
+
+            Video elem = new Video.VideoBuilder()
+                    .id(Long.valueOf(trakt_elem.optJSONObject("ids").optString("trakt")))
+                    .tvdb_id(trakt_elem.optJSONObject("ids").optString("tvdb"))
+                    .tmdb_id(trakt_elem.optJSONObject("ids").optString("tmdb"))
+                    .imdb_id(trakt_elem.optJSONObject("ids").optString("imdb"))
+                    .title(trakt_elem.optString("title"))
+                    .description(trakt_elem.optString("overview"))
+                    .cardImageUrl(poster)
+                    .bgImageUrl(background)
+                    .studio(network)
+                    .videoType(type)
+                    .productionYear(year)
+                    .airedEpisodes(trakt_elem.optLong("aired_episodes"))
+                    .videoUrl("https://placeholder/fake/url/for/android-tv/" +trakt_elem.getString("title") + ".mp4")
+                    .build();
+
+
+            videos.add(elem);
+
+        }
+
+
+
+        return videos;
+
 
     }
 
-    private String getPoster(JSONObject fanart) throws JSONException {
+    private String zeroAppended(String value) {
+        String ret = value;
+        if(Long.valueOf(value) < 10) {
+            ret = "0" + value;
+        }
+        return ret;
 
-        String poster = "";
+    }
+
+    public JSONArray getListFromTrakt(String url) throws JSONException, IOException {
+
+        JSONArray list;
+
+        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
+        urlConnection.setRequestMethod("GET");
+        urlConnection.setRequestProperty("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version));
+        urlConnection.setRequestProperty("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key));
+
+        list = new JSONArray(HTTPGrabber.getContentFromURL(urlConnection));
+
+        return list;
+    }
+
+
+
+    private String getPoster(JSONObject fanart, String fanart_object, String fanart_object_fallback, String season_number) throws JSONException {
+
+        String poster = mContext.getResources().getDrawable(R.drawable.movie, null).toString();
 
         JSONArray fa_poster;
-        fa_poster = (fanart.optJSONArray("movieposter") != null ? fanart.optJSONArray("movieposter") : fanart.optJSONArray("tvposter"));
+        fa_poster = fanart.optJSONArray(fanart_object);
 
-        if(fa_poster != null) {
+        if(fanart_object_fallback != "" && fa_poster == null) {
+            fa_poster = fanart.optJSONArray(fanart_object_fallback);
+        }
 
-            for(int j = 0; j < fa_poster.length(); j++) {
+        if(fa_poster == null) return "";
+
+        for(int j = 0; j < fa_poster.length(); j++) {
+
+            if(season_number.equals("")) {
                 // get poster of any language...
                 if(!fa_poster.optJSONObject(j).optString("lang").equals("00")) {
                     poster = fa_poster.getJSONObject(j).optString("url");
@@ -148,28 +209,42 @@ public class Chilly {
                     poster = fa_poster.getJSONObject(j).optString("url");
                     break;
                 }
+            } else {
+                // get poster of any language...
+                if(!fa_poster.optJSONObject(j).optString("lang").equals("00") && fa_poster.optJSONObject(j).optString("season").equals(season_number)) {
+                    poster = fa_poster.getJSONObject(j).optString("url");
+                }
+                // ... except there is one in english take that
+                if(fa_poster.optJSONObject(j).optString("lang").equals("en") && fa_poster.optJSONObject(j).optString("season").equals(season_number)) {
+                    poster = fa_poster.getJSONObject(j).optString("url");
+                    break;
+                }
             }
+
+
         }
+
+        // get smaller version
+        poster = poster.replace("/fanart/", "/preview/");
 
         return poster;
     }
 
-    private String getBackground(JSONObject fanart) throws JSONException {
+    private String getBackground(JSONObject fanart, String fanart_object) throws JSONException {
         String background = "";
 
         JSONArray fa_background;
-        fa_background = (fanart.optJSONArray("moviebackground") != null ? fanart.optJSONArray("moviebackground") : fanart.optJSONArray("showbackground"));
+        fa_background = fanart.optJSONArray(fanart_object);
 
-        if(fa_background != null) {
-            background = fa_background.optJSONObject(0).optString("url");
-        }
+        if(fa_background == null) return "";
+
+        background = fa_background.optJSONObject(0).optString("url");
         return background;
     }
 
-    public static JSONObject getFanart(String url) throws IOException, JSONException {
+    private JSONObject getDataFromFanart(String url) throws IOException, JSONException {
 
         JSONObject media = new JSONObject();
-
 
         HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
         urlConnection.setRequestMethod("GET");
@@ -185,4 +260,33 @@ public class Chilly {
     }
 
 
+    private File getDiskCacheDir(String uniqueName) {
+        // Check if media is mounted or storage is built-in, if so, try and use external cache dir
+        // otherwise use internal cache dir
+        final String cachePath = mContext.getCacheDir().getPath();
+
+        return new File(cachePath + File.separator + uniqueName);
+    }
+
+
+    private JSONObject getDataFromTMDB(String url) throws IOException, JSONException {
+
+        JSONObject media = new JSONObject();
+
+        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
+        urlConnection.setRequestMethod("GET");
+
+        try {
+            media = new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
+        } catch (Exception e) {
+
+        }
+
+
+        return media;
+    }
+
+
+
 }
+

@@ -59,6 +59,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.adisdurakovic.android.chilly.data.Chilly;
 import com.adisdurakovic.android.chilly.data.StreamGrabber;
 import com.adisdurakovic.android.chilly.data.Stream_123movieshd;
 import com.bumptech.glide.Glide;
@@ -71,14 +72,18 @@ import com.adisdurakovic.android.chilly.model.VideoCursorMapper;
 import com.adisdurakovic.android.chilly.presenter.CardPresenter;
 import com.adisdurakovic.android.chilly.presenter.DetailsDescriptionPresenter;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
 
 /*
  * VideoDetailsFragment extends DetailsFragment, a Wrapper fragment for leanback details screens.
  * It shows a detailed view of video and its metadata plus related videos.
  */
-public class VideoDetailsFragment extends DetailsFragment
-        implements LoaderManager.LoaderCallbacks<Cursor> {
+public class VideoDetailsFragment extends DetailsFragment {
     private static final int NO_NOTIFICATION = -1;
     private static final int ACTION_PLAY_NOW = 1;
     private static final int ACTION_PLAY_FROM = 2;
@@ -142,19 +147,19 @@ public class VideoDetailsFragment extends DetailsFragment
      * Check if there is a global search intent. If there is, load that video.
      */
     private boolean hasGlobalSearchIntent() {
-        Intent intent = getActivity().getIntent();
-        String intentAction = intent.getAction();
-        String globalSearch = getString(R.string.global_search);
-
-        if (globalSearch.equalsIgnoreCase(intentAction)) {
-            Uri intentData = intent.getData();
-            String videoId = intentData.getLastPathSegment();
-
-            Bundle args = new Bundle();
-            args.putString(VideoContract.VideoEntry._ID, videoId);
-            getLoaderManager().initLoader(mGlobalSearchVideoId++, args, this);
-            return true;
-        }
+//        Intent intent = getActivity().getIntent();
+//        String intentAction = intent.getAction();
+//        String globalSearch = getString(R.string.global_search);
+//
+//        if (globalSearch.equalsIgnoreCase(intentAction)) {
+//            Uri intentData = intent.getData();
+//            String videoId = intentData.getLastPathSegment();
+//
+//            Bundle args = new Bundle();
+//            args.putString(VideoContract.VideoEntry._ID, videoId);
+//            getLoaderManager().initLoader(mGlobalSearchVideoId++, args, this);
+//            return true;
+//        }
         return false;
     }
 
@@ -185,7 +190,7 @@ public class VideoDetailsFragment extends DetailsFragment
         // Set detail background and style.
         FullWidthDetailsOverviewRowPresenter detailsPresenter =
                 new FullWidthDetailsOverviewRowPresenter(new DetailsDescriptionPresenter(),
-                        new MovieDetailsOverviewLogoPresenter());
+                        new MovieDetailsOverviewLogoPresenter(mSelectedVideo));
 
         detailsPresenter.setBackgroundColor(
                 ContextCompat.getColor(getActivity(), R.color.videodetails_background));
@@ -206,7 +211,7 @@ public class VideoDetailsFragment extends DetailsFragment
 //                    Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
 //                    intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
 //                    startActivity(intent);
-                    new StreamTask(getActivity(), mFragment, mSelectedVideo).execute();
+                    new StreamTask(mFragment, mSelectedVideo).execute();
                 } else {
                     Toast.makeText(getActivity(), action.toString(), Toast.LENGTH_SHORT).show();
                 }
@@ -220,66 +225,72 @@ public class VideoDetailsFragment extends DetailsFragment
         setAdapter(mAdapter);
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        switch (id) {
-            case RELATED_VIDEO_LOADER: {
-                String category = args.getString(VideoContract.VideoEntry.COLUMN_CATEGORY);
-                return new CursorLoader(
-                        getActivity(),
-                        VideoContract.VideoEntry.CONTENT_URI,
-                        null,
-                        VideoContract.VideoEntry.COLUMN_CATEGORY + " = ?",
-                        new String[]{category},
-                        null
-                );
-            }
-            default: {
-                // Loading video from global search.
-                String videoId = args.getString(VideoContract.VideoEntry._ID);
-                return new CursorLoader(
-                        getActivity(),
-                        VideoContract.VideoEntry.CONTENT_URI,
-                        null,
-                        VideoContract.VideoEntry._ID + " = ?",
-                        new String[]{videoId},
-                        null
-                );
-            }
-        }
+//    @Override
+//    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+//        switch (id) {
+//            case RELATED_VIDEO_LOADER: {
+//                String category = args.getString(VideoContract.VideoEntry.COLUMN_CATEGORY);
+//                return new CursorLoader(
+//                        getActivity(),
+//                        VideoContract.VideoEntry.CONTENT_URI,
+//                        null,
+//                        VideoContract.VideoEntry.COLUMN_CATEGORY + " = ?",
+//                        new String[]{category},
+//                        null
+//                );
+//            }
+//            default: {
+//                // Loading video from global search.
+//                String videoId = args.getString(VideoContract.VideoEntry._ID);
+//                return new CursorLoader(
+//                        getActivity(),
+//                        VideoContract.VideoEntry.CONTENT_URI,
+//                        null,
+//                        VideoContract.VideoEntry._ID + " = ?",
+//                        new String[]{videoId},
+//                        null
+//                );
+//            }
+//        }
+//
+//    }
 
-    }
+//    @Override
+//    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+//        if (cursor != null && cursor.moveToNext()) {
+//            switch (loader.getId()) {
+//                case RELATED_VIDEO_LOADER: {
+//                    mVideoCursorAdapter.changeCursor(cursor);
+//                    break;
+//                }
+//                default: {
+//                    // Loading video from global search.
+//                    mSelectedVideo = (Video) mVideoCursorMapper.convert(cursor);
+//
+//                    setupAdapter();
+//                    setupDetailsOverviewRow();
+//                    setupMovieListRow();
+//                    updateBackground(mSelectedVideo.bgImageUrl);
+//
+//                    // When a Related Video item is clicked.
+//                    setOnItemViewClickedListener(new ItemViewClickedListener());
+//                }
+//            }
+//        }
+//    }
 
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        if (cursor != null && cursor.moveToNext()) {
-            switch (loader.getId()) {
-                case RELATED_VIDEO_LOADER: {
-                    mVideoCursorAdapter.changeCursor(cursor);
-                    break;
-                }
-                default: {
-                    // Loading video from global search.
-                    mSelectedVideo = (Video) mVideoCursorMapper.convert(cursor);
-
-                    setupAdapter();
-                    setupDetailsOverviewRow();
-                    setupMovieListRow();
-                    updateBackground(mSelectedVideo.bgImageUrl);
-
-                    // When a Related Video item is clicked.
-                    setOnItemViewClickedListener(new ItemViewClickedListener());
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        mVideoCursorAdapter.changeCursor(null);
-    }
+//    @Override
+//    public void onLoaderReset(Loader<Cursor> loader) {
+//        mVideoCursorAdapter.changeCursor(null);
+//    }
 
     static class MovieDetailsOverviewLogoPresenter extends DetailsOverviewLogoPresenter {
+
+        Video mSelectedVideo;
+
+        MovieDetailsOverviewLogoPresenter(Video v) {
+            mSelectedVideo = v;
+        }
 
         static class ViewHolder extends DetailsOverviewLogoPresenter.ViewHolder {
             public ViewHolder(View view) {
@@ -303,6 +314,11 @@ public class VideoDetailsFragment extends DetailsFragment
             Resources res = parent.getResources();
             int width = res.getDimensionPixelSize(R.dimen.detail_thumb_width);
             int height = res.getDimensionPixelSize(R.dimen.detail_thumb_height);
+
+            if(mSelectedVideo.videoType.equals("episode")) {
+                height = res.getDimensionPixelSize(R.dimen.detail_thumb_episode_height);
+            }
+
             imageView.setLayoutParams(new ViewGroup.MarginLayoutParams(width, height));
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
@@ -350,18 +366,16 @@ public class VideoDetailsFragment extends DetailsFragment
         mAdapter.add(row);
     }
 
+    // load seasons
     private void setupMovieListRow() {
-        String subcategories[] = {getString(R.string.related_movies)};
 
-        // Generating related video list.
-        String category = mSelectedVideo.category;
 
-        Bundle args = new Bundle();
-        args.putString(VideoContract.VideoEntry.COLUMN_CATEGORY, category);
-        getLoaderManager().initLoader(RELATED_VIDEO_LOADER, args, this);
+        System.out.println(mSelectedVideo);
 
-        HeaderItem header = new HeaderItem(0, subcategories[0]);
-        mAdapter.add(new ListRow(header, mVideoCursorAdapter));
+        if(mSelectedVideo.videoType.equals("tvshow")) {
+            new SeasonTask(this, mAdapter, mSelectedVideo).execute();
+        }
+
     }
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
@@ -371,14 +385,14 @@ public class VideoDetailsFragment extends DetailsFragment
 
             if (item instanceof Video) {
                 Video video = (Video) item;
-                Intent intent = new Intent(getActivity(), VideoDetailsActivity.class);
-                intent.putExtra(VideoDetailsActivity.VIDEO, video);
-
-                Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                        getActivity(),
-                        ((ImageCardView) itemViewHolder.view).getMainImageView(),
-                        VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
-                getActivity().startActivity(intent, bundle);
+                Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
+                intent.putExtra("season", video);
+                intent.putExtra("tvshow", mSelectedVideo);
+                intent.putExtra("display-list", "episodes-for-show-season");
+                Bundle bundle =
+                        ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+                                .toBundle();
+                startActivity(intent, bundle);
             }
         }
     }
@@ -393,8 +407,8 @@ class StreamTask extends AsyncTask<String, String, String> {
     private final VideoDetailsFragment fragment;
     String streamurl = "";
 
-    public StreamTask(Activity activity, VideoDetailsFragment fragment, Video video) {
-        this.activity = activity;
+    public StreamTask(VideoDetailsFragment fragment, Video video) {
+        this.activity = fragment.getActivity();
         this.mSelectedVideo = video;
         this.fragment = fragment;
     }
@@ -410,6 +424,7 @@ class StreamTask extends AsyncTask<String, String, String> {
     // Checking login in background
     protected String doInBackground(String... params) {
 
+
         try {
             streamurl = StreamGrabber.getLastSource(mSelectedVideo);
         } catch (IOException e) {
@@ -423,7 +438,8 @@ class StreamTask extends AsyncTask<String, String, String> {
     // After completing background task Dismiss the progress dialog
     protected void onPostExecute(String file_url) {
         // dismiss the dialog once done
-        System.out.println(streamurl);
+//        System.out.println(streamurl);
+        Toast.makeText(activity, streamurl, Toast.LENGTH_SHORT).show();
         if(streamurl == "") {
             Toast.makeText(activity, fragment.getResources()
                     .getString(R.string.playback_nosources), Toast.LENGTH_SHORT).show();
@@ -434,6 +450,60 @@ class StreamTask extends AsyncTask<String, String, String> {
             fragment.startActivity(intent);
         }
 
+
+    }
+}
+
+
+class SeasonTask extends AsyncTask<String, String, String> {
+
+    private final Activity activity;
+    private final Video mSelectedVideo;
+    private final VideoDetailsFragment fragment;
+    private final ArrayObjectAdapter mAdapter;
+    ArrayObjectAdapter show_seasons;
+
+    public SeasonTask(VideoDetailsFragment fragment, ArrayObjectAdapter adapter, Video video) {
+        this.activity = fragment.getActivity();
+        this.mSelectedVideo = video;
+        this.fragment = fragment;
+        this.mAdapter = adapter;
+        this.show_seasons = new ArrayObjectAdapter(new CardPresenter());
+    }
+
+    // Before starting background thread Show Progress Dialog
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        Toast.makeText(activity, "loading seasons", Toast.LENGTH_SHORT).show();
+    }
+
+    // Checking login in background
+    protected String doInBackground(String... params) {
+
+        Chilly chilly = new Chilly(activity.getApplicationContext());
+        try {
+            List<Video> seasons = chilly.getSeasonsForShow(mSelectedVideo);
+
+            System.out.println(seasons);
+
+            for(Iterator<Video> i = seasons.iterator(); i.hasNext();) {
+                Video v = i.next();
+                show_seasons.add(v);
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+
+    }
+
+    // After completing background task Dismiss the progress dialog
+    protected void onPostExecute(String file_url) {
+        HeaderItem header = new HeaderItem(0, fragment.getActivity().getString(R.string.tvshow_seasons));
+        mAdapter.add(new ListRow(header, show_seasons));
 
     }
 }

@@ -53,6 +53,9 @@ public class VideoDbBuilder {
     public static final String TAG_CARD_THUMB = "card";
     public static final String TAG_BACKGROUND = "background";
     public static final String TAG_TITLE = "title";
+    public static final String TAG_PRODUCTION_YEAR = "year";
+    public static final String TAG_VIDEOTYPE = "type";
+
 
     private static final String TAG = "VideoDbBuilder";
 
@@ -78,10 +81,10 @@ public class VideoDbBuilder {
             throws IOException, JSONException {
 
         JSONObject chillyData = new JSONObject();
-        JSONArray popularMovies = chilly.getDataFromIMDB("Movies popular", mContext.getResources().getString(R.string.imdb_url_movies_popular), mContext.getResources().getString(R.string.trakt_api_url_movie_info), mContext.getResources().getString(R.string.fanart_api_url_movies), "tmdb");
-        JSONArray popularTVShows = chilly.getDataFromIMDB("TV Shows popular", mContext.getResources().getString(R.string.imdb_url_tvshows_popular), mContext.getResources().getString(R.string.trakt_api_url_tvshow_info), mContext.getResources().getString(R.string.fanart_api_url_tvshows), "tvdb");
-        chillyData.put("chillyvideos", concatArray(popularMovies, popularTVShows));
-//        chillyData.put("chillyvideos", popularMovies);
+//        List<Video> popularMovies = chilly.getTrendingMovies();
+//        List<Video> popularTVShows = chilly.getTrendingTVShows();
+//        chillyData.put("chillyvideos", concatArray(popularMovies, popularTVShows));
+////        chillyData.put("chillyvideos", popularMovies);
 
 
         return buildMedia(chillyData);
@@ -134,6 +137,8 @@ public class VideoDbBuilder {
                 String bgImageUrl = video.optString(TAG_BACKGROUND);
                 String cardImageUrl = video.optString(TAG_CARD_THUMB);
                 String studio = video.optString(TAG_STUDIO);
+                String type = video.optString(TAG_VIDEOTYPE);
+                String year = video.optString(TAG_PRODUCTION_YEAR);
 
                 ContentValues videoValues = new ContentValues();
                 videoValues.put(VideoContract.VideoEntry.COLUMN_CATEGORY, categoryName);
@@ -143,13 +148,14 @@ public class VideoDbBuilder {
                 videoValues.put(VideoContract.VideoEntry.COLUMN_CARD_IMG, cardImageUrl);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_BG_IMAGE_URL, bgImageUrl);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_STUDIO, studio);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_VIDEO_TYPE, type);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_PRODUCTION_YEAR, year);
+                videoValues.put(VideoContract.VideoEntry.COLUMN_DURATION, 0);
 
                 // Fixed defaults.
                 videoValues.put(VideoContract.VideoEntry.COLUMN_CONTENT_TYPE, "video/mp4");
                 videoValues.put(VideoContract.VideoEntry.COLUMN_IS_LIVE, false);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_AUDIO_CHANNEL_CONFIG, "2.0");
-                videoValues.put(VideoContract.VideoEntry.COLUMN_PRODUCTION_YEAR, 2014);
-                videoValues.put(VideoContract.VideoEntry.COLUMN_DURATION, 0);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_RATING_STYLE,
                         Rating.RATING_5_STARS);
                 videoValues.put(VideoContract.VideoEntry.COLUMN_RATING_SCORE, 3.5f);

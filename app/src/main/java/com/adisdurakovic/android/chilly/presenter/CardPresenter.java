@@ -34,6 +34,7 @@ import com.adisdurakovic.android.chilly.model.Video;
 public class CardPresenter extends Presenter {
     private int mSelectedBackgroundColor = -1;
     private int mDefaultBackgroundColor = -1;
+    public boolean isEpisode = false;
     private Drawable mDefaultCardImage;
 
     @Override
@@ -73,13 +74,19 @@ public class CardPresenter extends Presenter {
 
         ImageCardView cardView = (ImageCardView) viewHolder.view;
         cardView.setTitleText(video.title);
-        cardView.setContentText(video.studio);
+        cardView.setContentText(video.productionYear);
 
         if (video.cardImageUrl != null) {
             // Set card size from dimension resources.
             Resources res = cardView.getResources();
             int width = res.getDimensionPixelSize(R.dimen.card_width);
             int height = res.getDimensionPixelSize(R.dimen.card_height);
+
+            if(isEpisode) {
+                width = res.getDimensionPixelSize(R.dimen.card_episode_width);
+                height = res.getDimensionPixelSize(R.dimen.card_episode_height);
+            }
+
             cardView.setMainImageDimensions(width, height);
 
             Glide.with(cardView.getContext())
