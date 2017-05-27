@@ -31,13 +31,9 @@ import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.ui.MainFragment;
 
 public class GridItemPresenter extends Presenter {
-    private final BrowseFragment mainFragment;
     private int mSelectedBackgroundColor = -1;
     private int mDefaultBackgroundColor = -1;
 
-    public GridItemPresenter(MainFragment mainFragment) {
-        this.mainFragment = mainFragment;
-    }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {

@@ -107,9 +107,9 @@ public class MainFragment extends BrowseFragment {
 //    }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         // Final initialization, modifying UI elements.
-        super.onActivityCreated(savedInstanceState);
+        super.onCreate(savedInstanceState);
 
         // Prepare the manager that maintains the same background image between activities.
         prepareBackgroundManager();
@@ -158,7 +158,7 @@ public class MainFragment extends BrowseFragment {
         setBadgeDrawable(
                 getActivity().getResources().getDrawable(R.drawable.app_icon_chilly_transparent, null));
         setTitle(getString(R.string.browse_title)); // Badge, when set, takes precedent over title
-        setHeadersState(HEADERS_ENABLED);
+        setHeadersState(HEADERS_DISABLED);
         setHeadersTransitionOnBackEnabled(true);
 
         // Set fastLane (or headers) background color
@@ -176,6 +176,16 @@ public class MainFragment extends BrowseFragment {
     }
 
     private void loadRows() {
+
+        HeaderItem gridHeader = new HeaderItem("");
+        GridItemPresenter gridPresenter = new GridItemPresenter();
+        ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(gridPresenter);
+//        gridRowAdapter.add(getActivity().getString(R.string.grid_view));
+//        gridRowAdapter.add(getActivity().getString(R.string.guidedstep_first_title));
+//        gridRowAdapter.add(getActivity().getString(R.string.error_fragment));
+//        gridRowAdapter.add(getActivity().getString(R.string.personal_settings));
+        ListRow row = new ListRow(gridHeader, gridRowAdapter);
+        mCategoryRowAdapter.add(row);
 
         new HomeLoader(this, mCategoryRowAdapter).execute();
 
@@ -374,7 +384,7 @@ public class MainFragment extends BrowseFragment {
                         VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
                 getActivity().startActivity(intent, bundle);
             } else if (item instanceof String) {
-                if (((String) item).contains(getString(R.string.grid_view))) {
+                if (((String) item).contains(getString(R.string.trending))) {
                     Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
                     intent.putExtra("display-list","movies-trending");
                     Bundle bundle =
@@ -400,6 +410,11 @@ public class MainFragment extends BrowseFragment {
                 } else {
                     Toast.makeText(getActivity(), ((String) item), Toast.LENGTH_SHORT)
                             .show();
+                    Intent intent = new Intent(getActivity(), GuidedStepActivity.class);
+                    Bundle bundle =
+                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+                                    .toBundle();
+                    startActivity(intent, bundle);
                 }
             }
         }
@@ -475,21 +490,32 @@ class HomeLoader extends AsyncTask<String, String, String> {
     protected void onPostExecute(String file_url) {
         // dismiss the dialog once done
         HeaderItem header_movies = new HeaderItem(0, "MOVIES");
-        mCategoryRowAdapter.add(new ListRow(header_movies, start_movies));
+
 
         HeaderItem header_tvshows = new HeaderItem(1, "TV SHOWS");
+
+
+        HeaderItem gridHeader_movies = new HeaderItem("MORE");
+        GridItemPresenter gridPresenter_movies = new GridItemPresenter();
+        ArrayObjectAdapter gridRowAdapter_movies = new ArrayObjectAdapter(gridPresenter_movies);
+        gridRowAdapter_movies.add(fragment.getActivity().getString(R.string.trending));
+        gridRowAdapter_movies.add(fragment.getActivity().getString(R.string.popular));
+        gridRowAdapter_movies.add(fragment.getActivity().getString(R.string.boxoffice));
+        ListRow row_more_movies = new ListRow(gridHeader_movies, gridRowAdapter_movies);
+
+        HeaderItem gridHeader_tvshows = new HeaderItem("MORE");
+        GridItemPresenter gridPresenter_tvshows = new GridItemPresenter();
+        ArrayObjectAdapter gridRowAdapter_tvshows = new ArrayObjectAdapter(gridPresenter_tvshows);
+        gridRowAdapter_tvshows.add(fragment.getActivity().getString(R.string.trending));
+        gridRowAdapter_tvshows.add(fragment.getActivity().getString(R.string.popular));
+        gridRowAdapter_tvshows.add(fragment.getActivity().getString(R.string.boxoffice));
+        ListRow row_more_tvshows = new ListRow(gridHeader_tvshows, gridRowAdapter_movies);
+
+
+        mCategoryRowAdapter.add(new ListRow(header_movies, start_movies));
+        mCategoryRowAdapter.add(row_more_movies);
         mCategoryRowAdapter.add(new ListRow(header_tvshows, start_tvshows));
-
-        HeaderItem gridHeader = new HeaderItem("SETTINGS");
-        GridItemPresenter gridPresenter = new GridItemPresenter(fragment);
-        ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(gridPresenter);
-        gridRowAdapter.add(fragment.getActivity().getString(R.string.grid_view));
-        gridRowAdapter.add(fragment.getActivity().getString(R.string.guidedstep_first_title));
-        gridRowAdapter.add(fragment.getActivity().getString(R.string.error_fragment));
-        gridRowAdapter.add(fragment.getActivity().getString(R.string.personal_settings));
-        ListRow row = new ListRow(gridHeader, gridRowAdapter);
-        mCategoryRowAdapter.add(row);
-
+        mCategoryRowAdapter.add(row_more_tvshows);
 
 
         fragment.startEntranceTransition();

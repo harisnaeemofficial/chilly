@@ -42,6 +42,12 @@
     <string name="buy_2">AT $9.99</string>
     <string name="queue_name">Play Queue</string>
 
+
+    <string name="movies_more">MORE MOVIES</string>
+    <string name="trending">Trending</string>
+    <string name="popular">Popular</string>
+    <string name="boxoffice">Box Office</string>
+
     <string name="search_results">Search results for \'%1$s\'</string>
     <string name="no_search_results">No search results found for \'%1$s\'</string>
     <string name="catalog_url">https://codecraft.at/tv.json</string>
