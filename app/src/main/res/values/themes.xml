@@ -42,4 +42,5 @@
         <item name="guidanceIconStyle">@style/Widget.Example.Leanback.FirstStepGuidanceIconStyle
         </item>
     </style>
+
 </resources>

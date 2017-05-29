@@ -70,6 +70,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -180,10 +181,6 @@ public class MainFragment extends BrowseFragment {
         HeaderItem gridHeader = new HeaderItem("");
         GridItemPresenter gridPresenter = new GridItemPresenter();
         ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(gridPresenter);
-//        gridRowAdapter.add(getActivity().getString(R.string.grid_view));
-//        gridRowAdapter.add(getActivity().getString(R.string.guidedstep_first_title));
-//        gridRowAdapter.add(getActivity().getString(R.string.error_fragment));
-//        gridRowAdapter.add(getActivity().getString(R.string.personal_settings));
         ListRow row = new ListRow(gridHeader, gridRowAdapter);
         mCategoryRowAdapter.add(row);
 
@@ -202,7 +199,7 @@ public class MainFragment extends BrowseFragment {
             }
         });
 
-        setOnItemViewClickedListener(new ItemViewClickedListener());
+        setOnItemViewClickedListener(new ItemViewClickedListener(this));
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
     }
 
@@ -237,121 +234,6 @@ public class MainFragment extends BrowseFragment {
         getActivity().startService(recommendationIntent);
     }
 
-//    @Override
-//    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-//        if (id == CATEGORY_LOADER) {
-//            return new CursorLoader(
-//                    getActivity(),   // Parent activity context
-//                    VideoContract.VideoEntry.CONTENT_URI, // Table to query
-//                    new String[]{"DISTINCT " + VideoContract.VideoEntry.COLUMN_CATEGORY},
-//                    // Only categories
-//                    null, // No selection clause
-//                    null, // No selection arguments
-//                    null  // Default sort order
-//            );
-//        } else {
-//            // Assume it is for a video.
-//            String category = args.getString(VideoContract.VideoEntry.COLUMN_CATEGORY);
-//
-//            // This just creates a CursorLoader that gets all videos.
-//            return new CursorLoader(
-//                    getActivity(), // Parent activity context
-//                    VideoContract.VideoEntry.CONTENT_URI, // Table to query
-//                    null, // Projection to return - null means return all fields
-//                    VideoContract.VideoEntry.COLUMN_CATEGORY + " = ?", // Selection clause
-//                    new String[]{category},  // Select based on the category id.
-//                    null // Default sort order
-//            );
-//        }
-//    }
-//
-//    @Override
-//    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-//        if (data != null && data.moveToFirst()) {
-//            final int loaderId = loader.getId();
-//
-//            if (loaderId == CATEGORY_LOADER) {
-//
-//                // Every time we have to re-get the category loader, we must re-create the sidebar.
-//                mCategoryRowAdapter.clear();
-//
-//                // Iterate through each category entry and add it to the ArrayAdapter.
-//                while (!data.isAfterLast()) {
-//
-//                    int categoryIndex =
-//                            data.getColumnIndex(VideoContract.VideoEntry.COLUMN_CATEGORY);
-//                    String category = data.getString(categoryIndex);
-//
-//                    // Create header for this category.
-//                    HeaderItem header = new HeaderItem(category);
-//
-//                    int videoLoaderId = category.hashCode(); // Create unique int from category.
-//                    CursorObjectAdapter existingAdapter = mVideoCursorAdapters.get(videoLoaderId);
-//                    if (existingAdapter == null) {
-//
-//                        // Map video results from the database to Video objects.
-//                        CursorObjectAdapter videoCursorAdapter =
-//                                new CursorObjectAdapter(new CardPresenter());
-//                        videoCursorAdapter.setMapper(new VideoCursorMapper());
-//                        mVideoCursorAdapters.put(videoLoaderId, videoCursorAdapter);
-//
-//
-//
-//                        ListRow row = new ListRow(header, videoCursorAdapter);
-//
-//                        mCategoryRowAdapter.add(row);
-//
-//
-//                        // Start loading the videos from the database for a particular category.
-//                        Bundle args = new Bundle();
-//                        args.putString(VideoContract.VideoEntry.COLUMN_CATEGORY, category);
-//                        getLoaderManager().initLoader(videoLoaderId, args, this);
-//                    } else {
-//                        ListRow row = new ListRow(header, existingAdapter);
-//                        mCategoryRowAdapter.add(row);
-//
-//                    }
-//
-//                    data.moveToNext();
-//                }
-//
-//                // Create a row for this special case with more samples.
-//                HeaderItem gridHeader = new HeaderItem("SETTINGS");
-//                GridItemPresenter gridPresenter = new GridItemPresenter(this);
-//                ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(gridPresenter);
-//                gridRowAdapter.add(getString(R.string.grid_view));
-//                gridRowAdapter.add(getString(R.string.guidedstep_first_title));
-//                gridRowAdapter.add(getString(R.string.error_fragment));
-//                gridRowAdapter.add(getString(R.string.personal_settings));
-//                ListRow row = new ListRow(gridHeader, gridRowAdapter);
-//                mCategoryRowAdapter.add(row);
-//
-//                System.out.println("BIGIF");
-//
-//                startEntranceTransition(); // TODO: Move startEntranceTransition to after all
-//                // cursors have loaded.
-//            } else {
-//                // The CursorAdapter contains a Cursor pointing to all videos.
-//                mVideoCursorAdapters.get(loaderId).changeCursor(data);
-//                System.out.println("ADAPTERGET");
-//            }
-//        } else {
-//            // Start an Intent to fetch the videos.
-//            Intent serviceIntent = new Intent(getActivity(), FetchVideoService.class);
-//            getActivity().startService(serviceIntent);
-//            System.out.println("INTENT");
-//        }
-//    }
-//
-//    @Override
-//    public void onLoaderReset(Loader<Cursor> loader) {
-//        int loaderId = loader.getId();
-//        if (loaderId != CATEGORY_LOADER) {
-//            mVideoCursorAdapters.get(loaderId).changeCursor(null);
-//        } else {
-//            mCategoryRowAdapter.clear();
-//        }
-//    }
 
     private class UpdateBackgroundTask extends TimerTask {
 
@@ -369,6 +251,13 @@ public class MainFragment extends BrowseFragment {
     }
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
+
+        private Fragment fragment;
+
+        public ItemViewClickedListener(Fragment frag) {
+            this.fragment = frag;
+        }
+
         @Override
         public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
                 RowPresenter.ViewHolder rowViewHolder, Row row) {
@@ -384,38 +273,42 @@ public class MainFragment extends BrowseFragment {
                         VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
                 getActivity().startActivity(intent, bundle);
             } else if (item instanceof String) {
-                if (((String) item).contains(getString(R.string.trending))) {
-                    Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
-                    intent.putExtra("display-list","movies-trending");
-                    Bundle bundle =
-                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
-                                    .toBundle();
-                    startActivity(intent, bundle);
-                } else if (((String) item).contains(getString(R.string.guidedstep_first_title))) {
-                    Intent intent = new Intent(getActivity(), GuidedStepActivity.class);
-                    Bundle bundle =
-                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
-                                    .toBundle();
-                    startActivity(intent, bundle);
-                } else if (((String) item).contains(getString(R.string.error_fragment))) {
-                    BrowseErrorFragment errorFragment = new BrowseErrorFragment();
-                    getFragmentManager().beginTransaction().replace(R.id.main_frame, errorFragment)
-                            .addToBackStack(null).commit();
-                } else if(((String) item).contains(getString(R.string.personal_settings))) {
-                    Intent intent = new Intent(getActivity(), SettingsActivity.class);
-                    Bundle bundle =
-                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
-                                    .toBundle();
-                    startActivity(intent, bundle);
-                } else {
-                    Toast.makeText(getActivity(), ((String) item), Toast.LENGTH_SHORT)
-                            .show();
-                    Intent intent = new Intent(getActivity(), GuidedStepActivity.class);
-                    Bundle bundle =
-                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
-                                    .toBundle();
-                    startActivity(intent, bundle);
-                }
+
+
+//               new MoreLoader(fragment, (String) item);
+
+//                if (((String) item).contains(getString(R.string.trending))) {
+//                    Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
+//                    intent.putExtra("display-list","movies_trending");
+//                    Bundle bundle =
+//                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+//                                    .toBundle();
+//                    startActivity(intent, bundle);
+//                } else if (((String) item).contains(getString(R.string.guidedstep_first_title))) {
+//                    Intent intent = new Intent(getActivity(), GuidedStepActivity.class);
+//                    Bundle bundle =
+//                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+//                                    .toBundle();
+//                    startActivity(intent, bundle);
+//                } else if (((String) item).contains(getString(R.string.error_fragment))) {
+//                    BrowseErrorFragment errorFragment = new BrowseErrorFragment();
+//                    getFragmentManager().beginTransaction().replace(R.id.main_frame, errorFragment)
+//                            .addToBackStack(null).commit();
+//                } else if(((String) item).contains(getString(R.string.personal_settings))) {
+//                    Intent intent = new Intent(getActivity(), SettingsActivity.class);
+//                    Bundle bundle =
+//                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+//                                    .toBundle();
+//                    startActivity(intent, bundle);
+//                } else {
+//                    Toast.makeText(getActivity(), ((String) item), Toast.LENGTH_SHORT)
+//                            .show();
+//                    Intent intent = new Intent(getActivity(), MoreMoviesActivity.class);
+//                    Bundle bundle =
+//                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+//                                    .toBundle();
+//                    startActivity(intent, bundle);
+//                }
             }
         }
     }
@@ -488,27 +381,23 @@ class HomeLoader extends AsyncTask<String, String, String> {
 
     // After completing background task Dismiss the progress dialog
     protected void onPostExecute(String file_url) {
-        // dismiss the dialog once done
+
         HeaderItem header_movies = new HeaderItem(0, "MOVIES");
-
-
         HeaderItem header_tvshows = new HeaderItem(1, "TV SHOWS");
+        HeaderItem gridHeader_movies = new HeaderItem("MORE MOVIES");
+        HeaderItem gridHeader_tvshows = new HeaderItem("MORE TV SHOWS");
 
-
-        HeaderItem gridHeader_movies = new HeaderItem("MORE");
         GridItemPresenter gridPresenter_movies = new GridItemPresenter();
         ArrayObjectAdapter gridRowAdapter_movies = new ArrayObjectAdapter(gridPresenter_movies);
-        gridRowAdapter_movies.add(fragment.getActivity().getString(R.string.trending));
-        gridRowAdapter_movies.add(fragment.getActivity().getString(R.string.popular));
-        gridRowAdapter_movies.add(fragment.getActivity().getString(R.string.boxoffice));
+        gridRowAdapter_movies.add("Browse Movies");
+        gridRowAdapter_movies.add("Movie Genres");
         ListRow row_more_movies = new ListRow(gridHeader_movies, gridRowAdapter_movies);
 
-        HeaderItem gridHeader_tvshows = new HeaderItem("MORE");
+
         GridItemPresenter gridPresenter_tvshows = new GridItemPresenter();
         ArrayObjectAdapter gridRowAdapter_tvshows = new ArrayObjectAdapter(gridPresenter_tvshows);
-        gridRowAdapter_tvshows.add(fragment.getActivity().getString(R.string.trending));
-        gridRowAdapter_tvshows.add(fragment.getActivity().getString(R.string.popular));
-        gridRowAdapter_tvshows.add(fragment.getActivity().getString(R.string.boxoffice));
+        gridRowAdapter_tvshows.add("Browse TV Shows");
+        gridRowAdapter_tvshows.add("TV Show Genres");
         ListRow row_more_tvshows = new ListRow(gridHeader_tvshows, gridRowAdapter_movies);
 
 
@@ -523,3 +412,5 @@ class HomeLoader extends AsyncTask<String, String, String> {
 
     }
 }
+
+

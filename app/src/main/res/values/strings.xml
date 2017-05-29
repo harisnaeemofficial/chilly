@@ -47,6 +47,11 @@
     <string name="trending">Trending</string>
     <string name="popular">Popular</string>
     <string name="boxoffice">Box Office</string>
+    <string name="movies_trending">MOVIES: Trending</string>
+    <string name="movies_browse">MOVIES: Browse</string>
+    <string name="movies_browse_desc">Choose which list of movies to load.</string>
+    <string name="genre">GENRE</string>
+    <string name="year">YEAR</string>
 
     <string name="search_results">Search results for \'%1$s\'</string>
     <string name="no_search_results">No search results found for \'%1$s\'</string>

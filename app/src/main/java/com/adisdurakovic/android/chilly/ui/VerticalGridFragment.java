@@ -89,7 +89,11 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         if(getActivity().getIntent().getStringExtra("display-list").equals("episodes-for-show-season")) {
             cp.isEpisode = true;
             gridPresenter.setNumberOfColumns(4);
+            setTitle(mSelectedShow.title + ": " + mSelectedSeason.title);
+        } else {
+            setTitle(getActivity().getString(getResources().getIdentifier(getActivity().getIntent().getStringExtra("display-list"), "string", "com.adisdurakovic.android.chilly")));
         }
+
         mEpisodeadapter = new ArrayObjectAdapter(cp);
         setAdapter(mEpisodeadapter);
         setGridPresenter(gridPresenter);
@@ -97,6 +101,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         if (savedInstanceState == null) {
             prepareEntranceTransition();
         }
+
 
 
 
@@ -109,9 +114,6 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
 
         new MovieTVShowLoader(this, mEpisodeadapter, getActivity().getIntent().getStringExtra("display-list"), mSelectedShow, mSelectedSeason).execute();
 
-//        getLoaderManager().initLoader(ALL_VIDEOS_LOADER, null, this);
-//        Intent serviceIntent = new Intent(getActivity(), FetchVideoService.class);
-//        getActivity().startService(serviceIntent);
 
         // After 500ms, start the animation to transition the cards into view.
         new Handler().postDelayed(new Runnable() {
@@ -132,29 +134,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
     }
 
-//    @Override
-//    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-//        return new CursorLoader(
-//                getActivity(),
-//                VideoContract.VideoEntry.CONTENT_URI,
-//                null, // projection
-//                null, // selection
-//                null, // selection clause
-//                null  // sort order
-//        );
-//    }
 
-//    @Override
-//    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-//        if (loader.getId() == ALL_VIDEOS_LOADER && cursor != null && cursor.moveToFirst()) {
-//            mVideoCursorAdapter.changeCursor(cursor);
-//        }
-//    }
-
-//    @Override
-//    public void onLoaderReset(Loader<Cursor> loader) {
-//        mVideoCursorAdapter.changeCursor(null);
-//    }
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
         @Override
@@ -222,17 +202,14 @@ class MovieTVShowLoader extends AsyncTask<String, String, String> {
 
         try {
             switch(display_list) {
-                case "movies-trending":
+                case "movies_trending":
                     video_list = chilly.getTrendingMovies(40);
-//                    fragment.getActivity().setTitle("MOVIES: Trending");
                     break;
                 case "tvshows-trending":
                     video_list = chilly.getTrendingTVShows(40);
-//                    fragment.getActivity().setTitle("TV SHOWS: Trending");
                     break;
                 case "episodes-for-show-season":
                     video_list = chilly.getEpisodesForShowSeason(tvshow, tvseason);
-//                    fragment.getActivity().setTitle(tvshow.title + ": " + tvseason.title);
             }
 
         } catch (Exception e) {

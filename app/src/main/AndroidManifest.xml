@@ -102,6 +102,9 @@
         <activity
             android:name=".ui.GuidedStepActivity"
             android:theme="@style/Theme.Example.Leanback.GuidedStep" />
+        <activity
+            android:name=".ui.MoreMoviesActivity"
+            android:theme="@style/Theme.Example.Leanback.GuidedStep" />
 
         <!-- Provides search suggestions for keywords against video metadata. -->
         <provider

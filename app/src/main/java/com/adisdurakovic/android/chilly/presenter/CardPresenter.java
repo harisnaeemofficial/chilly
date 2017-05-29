@@ -21,6 +21,7 @@ import android.graphics.drawable.Drawable;
 import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v4.content.ContextCompat;
+import android.view.ContextThemeWrapper;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
@@ -51,7 +52,9 @@ public class CardPresenter extends Presenter {
                 updateCardBackgroundColor(this, selected);
                 super.setSelected(selected);
             }
+
         };
+
 
         cardView.setFocusable(true);
         cardView.setFocusableInTouchMode(true);

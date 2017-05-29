@@ -67,6 +67,18 @@ public class Chilly {
         return list;
     }
 
+    public List<String> getGenres(String forElem) throws JSONException, IOException {
+        List<String> genres = new ArrayList<>();
+        JSONArray trakt_genres = getListFromTrakt(mContext.getResources().getString(R.string.trakt_api_url) + "/genres/" + forElem);
+
+        for(int i = 0; i < trakt_genres.length(); i++) {
+            JSONObject trakt_elem = trakt_genres.getJSONObject(i);
+            genres.add(trakt_elem.getString("name"));
+        }
+
+        return genres;
+    }
+
 
     private List<Video> getVideos(String type, String trakt_list_url) throws JSONException, IOException {
 
@@ -144,7 +156,7 @@ public class Chilly {
                     .videoType(type)
                     .productionYear(year)
                     .airedEpisodes(trakt_elem.optLong("aired_episodes"))
-                    .videoUrl("https://placeholder/fake/url/for/android-tv/" +trakt_elem.getString("title") + ".mp4")
+                    .videoUrl("")
                     .build();
 
 

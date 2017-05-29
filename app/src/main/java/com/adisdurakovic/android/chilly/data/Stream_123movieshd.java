@@ -4,6 +4,8 @@ import android.graphics.Movie;
 
 import com.adisdurakovic.android.chilly.model.Video;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -13,6 +15,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,7 +28,7 @@ import java.util.regex.Pattern;
 public class Stream_123movieshd extends StreamProvider {
 
     @Override
-    public String getMovieStreamURL(Video video) throws IOException {
+    public List<StreamSource> getMovieStreamURL(Video video) throws IOException {
 
         String stream_url = "";
         String videotitle = video.title.toLowerCase().replaceAll("[^a-z0-9A-Z ]", "").replace(" ", "-");
@@ -39,10 +44,10 @@ public class Stream_123movieshd extends StreamProvider {
 
         String movie_list = HTTPGrabber.getContentFromURL(urlConnection_1);
         Document doc = Jsoup.parse(movie_list);
-        Element source = doc.select("a.ml-mask").first();
+        Element link_1 = doc.select("a.ml-mask").first();
 
-        if(source != null) {
-            player_url = "https://123movieshd.tv" + source.attr("href") + "/watching.html";
+        if(link_1 != null) {
+            player_url = "https://123movieshd.tv" + link_1.attr("href") + "/watching.html";
         }
 
 
@@ -52,12 +57,12 @@ public class Stream_123movieshd extends StreamProvider {
         String player_info = HTTPGrabber.getContentFromURL(urlConnection_2);
 
         Document doc2 = Jsoup.parse(player_info);
-        Element link = doc2.select("div.les-content a").first();
+        Element link_2 = doc2.select("div.les-content a").first();
 
         String link_url = "";
 
-        if(link != null) {
-            link_url = link.attr("player-data");
+        if(link_2 != null) {
+            link_url = link_2.attr("player-data");
         }
 
 
@@ -68,15 +73,38 @@ public class Stream_123movieshd extends StreamProvider {
         String stream_detail = HTTPGrabber.getContentFromURL(urlConnection_3);
 
 
-        Pattern pattern = Pattern.compile("(https:.*?redirector.*?)[\\'\\\"]");
+        Pattern pattern = Pattern.compile("sources:.*?file.*?[\\]]");
+//        Pattern pattern = Pattern.compile("(https:.*?redirector.*?)[\\'\\\"]");
         Matcher matcher = pattern.matcher(stream_detail);
 
+        List<StreamSource> source_list = new ArrayList<>();
+
         while(matcher.find()) {
-//            System.out.println(matcher.group());
+            String jsonString = "{" + matcher.group().replace("sources:", "'sources':").replace("file:", "'file':").replace("label:", "'label':") + "}";
+            try {
+                JSONObject source_object = new JSONObject(jsonString);
+                JSONArray sources = source_object.getJSONArray("sources");
+
+                for(int i = 0; i < sources.length(); i++) {
+                    JSONObject source = sources.getJSONObject(i);
+                    StreamSource ss = new StreamSource();
+                    ss.quality = source.optString("label").replace(" P", "");
+                    ss.url = source.getString("file");
+                    ss.provider = "123MOVIESHD";
+                    ss.videosource = "GVIDEO";
+                    if(!ss.quality.equals("Auto")) {
+                        source_list.add(ss);
+                    }
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             stream_url = matcher.group().replace("'","");
         }
 
-        return stream_url;
+
+        return source_list;
 
 
     }
