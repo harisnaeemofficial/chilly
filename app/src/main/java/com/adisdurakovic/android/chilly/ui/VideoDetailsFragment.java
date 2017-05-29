@@ -208,10 +208,10 @@ public class VideoDetailsFragment extends DetailsFragment {
             @Override
             public void onActionClicked(Action action) {
                 if (action.getId() == ACTION_PLAY_NOW) {
-//                    Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
-//                    intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
-//                    startActivity(intent);
-                    new StreamTask(mFragment, mSelectedVideo).execute();
+                    Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
+                    intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
+                    startActivity(intent);
+//                    new StreamTask(mFragment, mSelectedVideo).execute();
                 } else {
                     Toast.makeText(getActivity(), action.toString(), Toast.LENGTH_SHORT).show();
                 }
@@ -400,59 +400,59 @@ public class VideoDetailsFragment extends DetailsFragment {
 
 
 // Background ASYNC Task to login by making HTTP Request
-class StreamTask extends AsyncTask<String, String, String> {
-
-    private final Activity activity;
-    private final Video mSelectedVideo;
-    private final VideoDetailsFragment fragment;
-    String streamurl = "";
-
-    public StreamTask(VideoDetailsFragment fragment, Video video) {
-        this.activity = fragment.getActivity();
-        this.mSelectedVideo = video;
-        this.fragment = fragment;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-        Toast.makeText(activity, fragment.getResources()
-                .getString(R.string.playback_getsources), Toast.LENGTH_SHORT).show();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-
-        try {
-            streamurl = StreamGrabber.getLastSource(mSelectedVideo);
-        } catch (IOException e) {
-
-        }
-
-        return streamurl;
-
-    }
-
-    // After completing background task Dismiss the progress dialog
-    protected void onPostExecute(String file_url) {
-        // dismiss the dialog once done
-//        System.out.println(streamurl);
-        Toast.makeText(activity, streamurl, Toast.LENGTH_SHORT).show();
-        if(streamurl == "") {
-            Toast.makeText(activity, fragment.getResources()
-                    .getString(R.string.playback_nosources), Toast.LENGTH_SHORT).show();
-        } else {
-            mSelectedVideo.videoUrl = streamurl;
-            Intent intent = new Intent(this.activity, PlaybackOverlayActivity.class);
-            intent.putExtra(VideoDetailsActivity.VIDEO, this.mSelectedVideo);
-            fragment.startActivity(intent);
-        }
-
-
-    }
-}
+//class StreamTask extends AsyncTask<String, String, String> {
+//
+//    private final Activity activity;
+//    private final Video mSelectedVideo;
+//    private final VideoDetailsFragment fragment;
+//    String streamurl = "";
+//
+//    public StreamTask(VideoDetailsFragment fragment, Video video) {
+//        this.activity = fragment.getActivity();
+//        this.mSelectedVideo = video;
+//        this.fragment = fragment;
+//    }
+//
+//    // Before starting background thread Show Progress Dialog
+//    @Override
+//    protected void onPreExecute() {
+//        super.onPreExecute();
+//        Toast.makeText(activity, fragment.getResources()
+//                .getString(R.string.playback_getsources), Toast.LENGTH_SHORT).show();
+//    }
+//
+//    // Checking login in background
+//    protected String doInBackground(String... params) {
+//
+//
+//        try {
+//            streamurl = StreamGrabber.getLastSource(mSelectedVideo);
+//        } catch (IOException e) {
+//
+//        }
+//
+//        return streamurl;
+//
+//    }
+//
+//    // After completing background task Dismiss the progress dialog
+//    protected void onPostExecute(String file_url) {
+//        // dismiss the dialog once done
+////        System.out.println(streamurl);
+//        Toast.makeText(activity, streamurl, Toast.LENGTH_SHORT).show();
+//        if(streamurl == "") {
+//            Toast.makeText(activity, fragment.getResources()
+//                    .getString(R.string.playback_nosources), Toast.LENGTH_SHORT).show();
+//        } else {
+//            mSelectedVideo.videoUrl = streamurl;
+//            Intent intent = new Intent(this.activity, PlaybackOverlayActivity.class);
+//            intent.putExtra(VideoDetailsActivity.VIDEO, this.mSelectedVideo);
+//            fragment.startActivity(intent);
+//        }
+//
+//
+//    }
+//}
 
 
 class SeasonTask extends AsyncTask<String, String, String> {

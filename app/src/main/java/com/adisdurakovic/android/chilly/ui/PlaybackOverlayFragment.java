@@ -19,6 +19,7 @@ package com.adisdurakovic.android.chilly.ui;
 import static android.support.v4.media.session.MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS;
 import static android.support.v4.media.session.MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS;
 
+import com.adisdurakovic.android.chilly.data.StreamGrabber;
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.util.Util;
 
@@ -38,6 +39,7 @@ import android.media.AudioManager;
 import android.media.session.MediaController;
 import android.media.session.PlaybackState;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -64,6 +66,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
@@ -77,6 +80,7 @@ import com.adisdurakovic.android.chilly.player.ExtractorRendererBuilder;
 import com.adisdurakovic.android.chilly.player.VideoPlayer;
 import com.adisdurakovic.android.chilly.presenter.CardPresenter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,7 +93,9 @@ import java.util.List;
 public class PlaybackOverlayFragment
         extends android.support.v17.leanback.app.PlaybackOverlayFragment
         implements TextureView.SurfaceTextureListener,
-        VideoPlayer.Listener {
+        VideoPlayer.Listener
+        , StreamResponse
+{
     private static final String TAG = "PlaybackOverlayFragment";
     private static final int BACKGROUND_TYPE = PlaybackOverlayFragment.BG_LIGHT;
     private static final String AUTO_PLAY = "auto_play";
@@ -100,6 +106,9 @@ public class PlaybackOverlayFragment
     static {
         mAutoPlayExtras.putBoolean(AUTO_PLAY, true);
     }
+
+
+    String stream_newurl = "";
 
     private final VideoCursorMapper mVideoCursorMapper = new VideoCursorMapper();
     private int mSpecificVideoLoaderId = 3;
@@ -202,7 +211,10 @@ public class PlaybackOverlayFragment
         updatePlaybackRow();
         setAdapter(mRowsAdapter);
 
-        startPlaying();
+        new PlayStreamTask(this, mSelectedVideo).execute();
+
+//        startPlaying();
+
     }
 
     @Override
@@ -212,6 +224,7 @@ public class PlaybackOverlayFragment
         if (!updateSelectedVideo(video)) {
             return;
         }
+
 
         startPlaying();
     }
@@ -231,6 +244,16 @@ public class PlaybackOverlayFragment
         setOnItemViewClickedListener(new ItemViewClickedListener());
     }
 
+
+    @Override
+    public void onStreamGrab(String streamurl) {
+
+        mSelectedVideo.videoUrl = streamurl;
+        stream_newurl = streamurl;
+
+        startPlaying();
+    }
+
     private boolean updateSelectedVideo(Video video) {
 //        Intent intent = new Intent(getActivity().getIntent());
 //        intent.putExtra(VideoDetailsActivity.VIDEO, video);
@@ -238,6 +261,9 @@ public class PlaybackOverlayFragment
 //            return false;
 //        }
         mSelectedVideo = video;
+        if(stream_newurl != "") {
+            mSelectedVideo.videoUrl = stream_newurl;
+        }
 
 //        PendingIntent pi = PendingIntent.getActivity(
 //                getActivity(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -778,5 +804,50 @@ public class PlaybackOverlayFragment
         public void onSeekTo(long position) {
             setPosition(position);
         }
+    }
+}
+
+interface StreamResponse {
+    void onStreamGrab(String output);
+}
+
+
+class PlayStreamTask extends AsyncTask<String, String, String> {
+
+    private final Video mSelectedVideo;
+    StreamResponse delegate;
+    String streamurl = "";
+
+    public PlayStreamTask(StreamResponse del, Video video) {
+        this.mSelectedVideo = video;
+        this.delegate = del;
+    }
+
+    // Before starting background thread Show Progress Dialog
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+    }
+
+    // Checking login in background
+    protected String doInBackground(String... params) {
+
+
+        try {
+            streamurl = StreamGrabber.getLastSource(mSelectedVideo);
+        } catch (IOException e) {
+
+        }
+
+        return streamurl;
+
+    }
+
+    // After completing background task Dismiss the progress dialog
+    protected void onPostExecute(String streamurl) {
+        // dismiss the dialog once done
+//        System.out.println(streamurl);
+        delegate.onStreamGrab(streamurl);
+
     }
 }
