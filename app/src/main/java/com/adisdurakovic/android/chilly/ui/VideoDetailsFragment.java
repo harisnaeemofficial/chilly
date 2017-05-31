@@ -372,7 +372,7 @@ public class VideoDetailsFragment extends DetailsFragment {
 
         System.out.println(mSelectedVideo);
 
-        if(mSelectedVideo.videoType.equals("tvshow")) {
+        if(mSelectedVideo.videoType.equals("show")) {
             new SeasonTask(this, mAdapter, mSelectedVideo).execute();
         }
 
@@ -387,7 +387,7 @@ public class VideoDetailsFragment extends DetailsFragment {
                 Video video = (Video) item;
                 Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
                 intent.putExtra("season", video);
-                intent.putExtra("tvshow", mSelectedVideo);
+                intent.putExtra("show", mSelectedVideo);
                 intent.putExtra("display-list", "episodes-for-show-season");
                 Bundle bundle =
                         ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())

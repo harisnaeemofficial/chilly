@@ -37,6 +37,7 @@ import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.data.Chilly;
 import com.adisdurakovic.android.chilly.data.ListElem;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ import java.util.List;
 /*
  * This class demonstrates how to extend ErrorFragment to create an error dialog.
  */
-public class LoginFragment extends ErrorFragment implements RequestCodeResponse, RequestTokenResponse {
+public class LoginFragment extends ErrorFragment implements RequestCodeResponse, RequestTokenResponse, RequestUserResponse {
     private static final boolean TRANSLUCENT = true;
 
     private final Handler mHandler = new Handler();
@@ -119,9 +120,26 @@ public class LoginFragment extends ErrorFragment implements RequestCodeResponse,
             System.out.println("COMMIT SUCCESS");
             System.out.println(tokenResponse);
             hasToken = true;
+            try {
+                new RequestUserTask(getActivity().getApplicationContext(), this, tokenResponse.getString("access_token")).execute();
+            } catch (JSONException e) {
+
+            }
         } else {
             System.out.println("ERROR on COMMIT");
         }
+
+    }
+
+    @Override
+    public void onReceiveUser(JSONObject userResponse) {
+
+        System.out.println(userResponse);
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("trakt_user", userResponse.toString());
+        editor.commit();
 
     }
 
@@ -138,11 +156,8 @@ public class LoginFragment extends ErrorFragment implements RequestCodeResponse,
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
         String string_token = sharedPreferences.getString("trakt_token", "NOTOKEN");
 
-
         if(string_token.equals("")) {
             new RequestCodeTask(getActivity().getApplicationContext(), this).execute();
-        } else {
-            System.out.println(string_token);
         }
 
     }
@@ -270,6 +285,63 @@ class RequestTokenTask extends AsyncTask<String, String, String> {
             if(tokenResponse.getString("access_token") != null) {
                 delegate.onReceiveToken(tokenResponse);
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+}
+
+
+interface RequestUserResponse {
+    void onReceiveUser(JSONObject userResponse);
+}
+
+
+class RequestUserTask extends AsyncTask<String, String, String> {
+
+    RequestUserResponse delegate;
+    Context ctx;
+    JSONObject userResponse = new JSONObject();
+    String code;
+
+    public RequestUserTask(Context context, RequestUserResponse del, String access_token) {
+        this.delegate = del;
+        this.ctx = context;
+        this.code = access_token;
+    }
+
+    // Before starting background thread Show Progress Dialog
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+    }
+
+    // Checking login in background
+    protected String doInBackground(String... params) {
+
+        final Chilly chilly = new Chilly(ctx);
+
+
+
+        try {
+            userResponse = chilly.getUserFromTrakt(code);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+
+        return userResponse.toString();
+
+    }
+
+    // After completing background task Dismiss the progress dialog
+    protected void onPostExecute(String somestring) {
+        // dismiss the dialog once done
+        try {
+            delegate.onReceiveUser(userResponse);
         } catch (Exception e) {
             e.printStackTrace();
         }

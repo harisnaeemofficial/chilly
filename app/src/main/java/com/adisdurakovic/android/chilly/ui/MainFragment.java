@@ -175,8 +175,8 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
         more_movies.add(new ListElem("Movie Genres", "genres", "movie", "display-list", ""));
 
         if(hasValidTraktToken()) {
-            more_movies.add(new ListElem("Collection", "trakt-collection", "movie", "display-movies", ""));
-            more_movies.add(new ListElem("Watchlist", "trakt-watchlist", "movie", "display-videos", ""));
+            more_movies.add(new ListElem("Collection", "user-collection", "movie", "display-videos", ""));
+            more_movies.add(new ListElem("Watchlist", "user-watchlist", "movie", "display-videos", ""));
         }
 
         mCategoryRowAdapter.add(pos, new ListRow(header_more_movies, more_movies));
@@ -189,8 +189,8 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
         more_tvshows.add(new ListElem("TV Show Genres", "genres", "show", "display-list", ""));
 
         if(hasValidTraktToken()) {
-            more_tvshows.add(new ListElem("Collection", "trakt-collection", "show", "display-videos", ""));
-            more_tvshows.add(new ListElem("Watchlist", "trakt-watchlist", "show", "display-videos", ""));
+            more_tvshows.add(new ListElem("Collection", "user-collection", "show", "display-videos", ""));
+            more_tvshows.add(new ListElem("Watchlist", "user-watchlist", "show", "display-videos", ""));
         }
 
         mCategoryRowAdapter.add(pos, new ListRow(header_more_tvshows, more_tvshows));
@@ -271,14 +271,18 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
 
         HeaderItem header_movies = new HeaderItem(0, "MOVIES");
         HeaderItem header_tvshows = new HeaderItem(1, "TV SHOWS");
+        HeaderItem header_settings = new HeaderItem(1, "SETTINGS");
 
 
 
         ArrayObjectAdapter movies = new ArrayObjectAdapter(new CardPresenter());
         ArrayObjectAdapter tvshows = new ArrayObjectAdapter(new CardPresenter());
+        ArrayObjectAdapter settings = new ArrayObjectAdapter(new GridItemPresenter());
 
         movies.addAll(movies.size(), start_movies);
         tvshows.addAll(tvshows.size(), start_tvshows);
+
+        settings.add("Login");
 
         mCategoryRowAdapter.add(new ListRow(header_movies, movies));
         prepareMoreMovieButtons(mCategoryRowAdapter.size());
@@ -292,6 +296,8 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
                 mCategoryRowAdapter.removeItems(i, 1);
             }
         }
+
+        mCategoryRowAdapter.add(new ListRow(header_settings, settings));
 
 
         startEntranceTransition();
@@ -377,7 +383,15 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
                 getActivity().startActivity(intent, bundle);
             } else if (item instanceof String) {
 
+                if(item.equals("Login")) {
+                    LoginFragment loginFragment = new LoginFragment();
+                    getFragmentManager().beginTransaction().replace(R.id.main_frame, loginFragment)
+                            .addToBackStack(null).commit();
+                }
+
             } else if (item instanceof ListElem) {
+
+                System.out.println(((ListElem) item).action);
 
                 if(((ListElem) item).action.equals("display-list")) {
                     Intent intent = new Intent(getActivity(), ListSelectActivity.class);
@@ -385,6 +399,7 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
                     Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity()).toBundle();
                     startActivity(intent, bundle);
                 } else if(((ListElem) item).action.equals("display-videos")) {
+                    System.out.println("HERE");
                     Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
                     intent.putExtra("listElem",((ListElem) item));
                     Bundle bundle =

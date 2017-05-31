@@ -78,7 +78,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
 //        setAdapter(mVideoCursorAdapter);
 
         mSelectedShow = (Video) getActivity().getIntent()
-                .getParcelableExtra("tvshow");
+                .getParcelableExtra("show");
 
         mSelectedSeason = (Video) getActivity().getIntent()
                 .getParcelableExtra("season");
@@ -211,7 +211,11 @@ class VideoLoaderTask extends AsyncTask<String, String, String> {
                 video_list = chilly.getEpisodesForShowSeason(elem.tvshow, elem.season);
             } else {
                 if(elem.slug.contains("public")) {
-                    video_list = chilly.getPublicList(elem.slug.replace("public-", ""), elem.videoType, 40);
+                    video_list = chilly.getPublicVideos(elem.slug.replace("public-", ""), elem.videoType, 40);
+                }
+
+                if(elem.slug.contains("user")) {
+                    video_list = chilly.getUserVideos(elem.slug.replace("user-", ""), elem.videoType);
                 }
 
                 if(!elem.filterType.equals("")) {

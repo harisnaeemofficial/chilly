@@ -1,9 +1,11 @@
 package com.adisdurakovic.android.chilly.data;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 
 import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.model.Video;
@@ -42,16 +44,24 @@ public class Chilly {
         return list;
     }
 
-    public List<Video> getPublicList(String list_type, String videoType, int limit) throws JSONException, IOException {
+    public List<Video> getPublicVideos(String list_type, String videoType, int limit) throws JSONException, IOException {
         List<Video> list;
-        list = getVideos("movie", mContext.getResources().getString(R.string.trakt_api_url) + "/" + videoType + "s/" + list_type + "?extended=full&page=1&limit=" + String.valueOf(limit));
+        list = getVideos(videoType, mContext.getResources().getString(R.string.trakt_api_url) + "/" + videoType + "s/" + list_type + "?extended=full&page=1&limit=" + String.valueOf(limit));
+        return list;
+    }
+
+    public List<Video> getUserVideos(String list_type, String videoType) throws JSONException, IOException {
+        List<Video> list;
+        String user_id = getUserSlug();
+
+        list = getVideos(videoType, mContext.getResources().getString(R.string.trakt_api_url) + "/users/" + user_id + "/" + list_type + "/" + videoType + "s" + "?extended=full");
         return list;
     }
 
     public List<Video> getTrendingTVShows(int limit) throws JSONException, IOException {
 
         List<Video> list;
-        list = getVideos("tvshow", mContext.getResources().getString(R.string.trakt_api_url) + "/shows/trending?extended=full&page=1&limit=" + String.valueOf(limit));
+        list = getVideos("show", mContext.getResources().getString(R.string.trakt_api_url) + "/shows/trending?extended=full&page=1&limit=" + String.valueOf(limit));
         return list;
     }
 
@@ -96,6 +106,24 @@ public class Chilly {
         public_list.add(public_list.size(), new ListElem("Box office", "public-boxoffice", forElem, "display-videos", ""));
 
         return public_list;
+    }
+
+    private String getUserSlug() {
+
+        String ret = "";
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        String userstring = sharedPreferences.getString("trakt_user", "NOTOKEN");
+        try {
+            JSONObject trakt_user = new JSONObject(userstring);
+            ret = trakt_user.getJSONObject("user").getJSONObject("ids").getString("slug");
+
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return ret;
+
+
     }
 
 
@@ -143,7 +171,7 @@ public class Chilly {
                     background = getBackground(fanart_media, "moviebackground");
                     year = trakt_elem.optString("year");
                     break;
-                case "tvshow":
+                case "show":
                     trakt_elem = data_list.optJSONObject(i).optJSONObject("show");
                     fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + trakt_elem.optJSONObject("ids").optString("tvdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);;
                     fanart_media = getDataFromFanart(fanart_url);
@@ -225,6 +253,8 @@ public class Chilly {
         HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
         urlConnection.setRequestMethod("GET");
         urlConnection.setRequestProperty("Content-Type","application/json");
+
+
         urlConnection.setRequestProperty("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version));
         urlConnection.setRequestProperty("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key));
 
@@ -270,6 +300,20 @@ public class Chilly {
         ap_osw.flush();
         ap_osw.close();
 
+
+        return new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
+    }
+
+
+    public JSONObject getUserFromTrakt(String access_token) throws JSONException, IOException {
+        String url = mContext.getResources().getString(R.string.trakt_api_url) + "/users/settings";
+        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
+        urlConnection.setRequestMethod("GET");
+        urlConnection.setRequestProperty("Content-Type","application/json");
+
+        urlConnection.setRequestProperty("Authorization","Bearer " + access_token);
+        urlConnection.setRequestProperty("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version));
+        urlConnection.setRequestProperty("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key));
 
         return new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
     }
