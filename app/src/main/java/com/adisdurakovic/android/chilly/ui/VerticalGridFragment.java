@@ -18,6 +18,7 @@ package com.adisdurakovic.android.chilly.ui;
 
 import android.app.Activity;
 import android.app.LoaderManager;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
@@ -57,7 +58,7 @@ import java.util.List;
 /*
  * VerticalGridFragment shows a grid of videos that can be scrolled vertically.
  */
-public class VerticalGridFragment extends android.support.v17.leanback.app.VerticalGridFragment {
+public class VerticalGridFragment extends android.support.v17.leanback.app.VerticalGridFragment implements VideoLoaderResponse {
 
     private static final int NUM_COLUMNS = 5;
     private final CursorObjectAdapter mVideoCursorAdapter =
@@ -66,8 +67,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
     private ArrayObjectAdapter mEpisodeadapter;
     private Video mSelectedShow;
     private Video mSelectedSeason;
-    String intentvar;
-    ListElem intentelem;
+    ListElem elem;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -88,17 +88,17 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         VerticalGridPresenter gridPresenter = new VerticalGridPresenter();
         gridPresenter.setNumberOfColumns(5);
 
-        intentvar = getActivity().getIntent().getStringExtra("display-list");
-        intentelem = (ListElem) getActivity().getIntent().getParcelableExtra("display-elem");
-        if(intentvar != null && intentvar.equals("episodes-for-show-season")) {
+        elem = (ListElem) getActivity().getIntent().getParcelableExtra("listElem");
+        if(mSelectedShow != null && mSelectedSeason != null) {
             cp.isEpisode = true;
             gridPresenter.setNumberOfColumns(4);
             setTitle(mSelectedShow.title + ": " + mSelectedSeason.title);
+            elem.tvshow = mSelectedShow;
+            elem.season = mSelectedSeason;
+        } else {
+            setTitle(elem.videoType.toUpperCase() + "S: " + elem.title);
         }
 
-        if(intentelem != null) {
-            setTitle(intentelem.title);
-        }
 
         mEpisodeadapter = new ArrayObjectAdapter(cp);
         setAdapter(mEpisodeadapter);
@@ -118,7 +118,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
 
 
 
-        new MovieTVShowLoader(this, mEpisodeadapter, intentvar, intentelem, mSelectedShow, mSelectedSeason).execute();
+        new VideoLoaderTask(getActivity().getApplicationContext(), this, elem).execute();
 
 
         // After 500ms, start the animation to transition the cards into view.
@@ -140,6 +140,10 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
     }
 
+    @Override
+    public void onGrabVideos(List<Video> video_list) {
+        mEpisodeadapter.addAll(mEpisodeadapter.size(), video_list);
+    }
 
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
@@ -170,29 +174,24 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
     }
 }
 
+interface VideoLoaderResponse {
+    void onGrabVideos(List<Video> video_list);
+}
+
 // Background ASYNC Task to login by making HTTP Request
-class MovieTVShowLoader extends AsyncTask<String, String, String> {
+class VideoLoaderTask extends AsyncTask<String, String, String> {
 
-    private final Activity activity;
-    private final ArrayObjectAdapter mCategoryRowAdapter;
-    private final VerticalGridFragment fragment;
+    VideoLoaderResponse delegate = null;
     List<Video> video_list;
-    private String display_list;
-    private Video tvshow;
-    private Video tvseason;
-    private ListElem listelem;
+    private ListElem elem;
+    Chilly chilly;
 
 
-
-    public MovieTVShowLoader(VerticalGridFragment fragment, ArrayObjectAdapter adapter, String display_list, ListElem elem, Video show, Video season) {
-        this.activity = fragment.getActivity();
-        this.mCategoryRowAdapter = adapter;
-        this.fragment = fragment;
+    public VideoLoaderTask(Context ctx, VideoLoaderResponse del, ListElem elem) {
+        this.delegate = del;
+        this.chilly = new Chilly(ctx);
         this.video_list = new ArrayList<>();
-        this.display_list = display_list;
-        this.tvshow = show;
-        this.tvseason = season;
-        this.listelem = elem;
+        this.elem = elem;
     }
 
     // Before starting background thread Show Progress Dialog
@@ -206,31 +205,19 @@ class MovieTVShowLoader extends AsyncTask<String, String, String> {
     protected String doInBackground(String... params) {
 
 
-        Chilly chilly = new Chilly(activity.getApplicationContext());
-
-
-
         try {
 
-            if(display_list != null) {
-                switch(display_list) {
-                    case "movies_trending":
-                        video_list = chilly.getTrendingMovies(40);
-                        break;
-                    case "tvshows-trending":
-                        video_list = chilly.getTrendingTVShows(40);
-                        break;
-                    case "episodes-for-show-season":
-                        video_list = chilly.getEpisodesForShowSeason(tvshow, tvseason);
-                        break;
+            if(elem.tvshow != null && elem.season != null) {
+                video_list = chilly.getEpisodesForShowSeason(elem.tvshow, elem.season);
+            } else {
+                if(elem.slug.contains("public")) {
+                    video_list = chilly.getPublicList(elem.slug.replace("public-", ""), elem.videoType, 40);
+                }
+
+                if(!elem.filterType.equals("")) {
+                    video_list = chilly.getByFilter(elem, 40);
                 }
             }
-
-            if(listelem != null) {
-                video_list = chilly.getFromSearch(listelem, 40);
-            }
-
-
 
 
         } catch (Exception e) {
@@ -243,6 +230,6 @@ class MovieTVShowLoader extends AsyncTask<String, String, String> {
 
     // After completing background task Dismiss the progress dialog
     protected void onPostExecute(String file_url) {
-        mCategoryRowAdapter.addAll(mCategoryRowAdapter.size(), video_list);
+        delegate.onGrabVideos(video_list);
     }
 }

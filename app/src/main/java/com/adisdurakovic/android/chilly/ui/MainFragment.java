@@ -116,11 +116,9 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
         super.onCreate(savedInstanceState);
 
         // Prepare the manager that maintains the same background image between activities.
-        prepareBackgroundManager();
+//        prepareBackgroundManager();
 
-        setupUIElements();
-        setupEventListeners();
-        prepareEntranceTransition();
+
 
 
         // Map category results from the database to ListRow objects.
@@ -132,6 +130,15 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
 
 
         updateRecommendations();
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        prepareBackgroundManager();
+        setupUIElements();
+        setupEventListeners();
+        prepareEntranceTransition();
     }
 
     @Override
@@ -159,12 +166,12 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
     private void prepareMoreMovieButtons(int pos) {
         HeaderItem header_more_movies = new HeaderItem("MORE MOVIES");
         ArrayObjectAdapter more_movies = new ArrayObjectAdapter(new GridItemPresenter());
-        more_movies.add(new ListElem("Browse Movies", "trakt-public-list", "movie", "list-select"));
-        more_movies.add(new ListElem("Movie Genres", "genres", "movie", "list-select"));
+        more_movies.add(new ListElem("Browse Movies", "trakt-public-list", "movie", "display-list", ""));
+        more_movies.add(new ListElem("Movie Genres", "genres", "movie", "display-list", ""));
 
         if(hasValidTraktToken()) {
-            more_movies.add(new ListElem("Collection", "trakt-collection", "movie", "display-movies"));
-            more_movies.add(new ListElem("Watchlist", "trakt-watchlist", "movie", "display-movies"));
+            more_movies.add(new ListElem("Collection", "trakt-collection", "movie", "display-movies", ""));
+            more_movies.add(new ListElem("Watchlist", "trakt-watchlist", "movie", "display-videos", ""));
         }
 
         mCategoryRowAdapter.add(pos, new ListRow(header_more_movies, more_movies));
@@ -173,12 +180,12 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
     private void prepareMoreTVShowButtons(int pos) {
         HeaderItem header_more_tvshows = new HeaderItem("MORE TV SHOWS");
         ArrayObjectAdapter more_tvshows = new ArrayObjectAdapter(new GridItemPresenter());
-        more_tvshows.add(new ListElem("Browse TV Shows", "trakt-public-list", "show", "list-select"));
-        more_tvshows.add(new ListElem("TV Show Genres", "genres", "show", "list-select"));
+        more_tvshows.add(new ListElem("Browse TV Shows", "trakt-public-list", "show", "display-list", ""));
+        more_tvshows.add(new ListElem("TV Show Genres", "genres", "show", "display-list", ""));
 
         if(hasValidTraktToken()) {
-            more_tvshows.add(new ListElem("Collection", "trakt-collection", "show", "display-movies"));
-            more_tvshows.add(new ListElem("Watchlist", "trakt-watchlist", "show", "display-movies"));
+            more_tvshows.add(new ListElem("Collection", "trakt-collection", "show", "display-videos", ""));
+            more_tvshows.add(new ListElem("Watchlist", "trakt-watchlist", "show", "display-videos", ""));
         }
 
         mCategoryRowAdapter.add(pos, new ListRow(header_more_tvshows, more_tvshows));
@@ -370,10 +377,17 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
 
             } else if (item instanceof ListElem) {
 
-                if(((ListElem) item).filterType.equals("list-select")) {
+                if(((ListElem) item).action.equals("display-list")) {
                     Intent intent = new Intent(getActivity(), ListSelectActivity.class);
                     intent.putExtra("listElem",((ListElem) item));
                     Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity()).toBundle();
+                    startActivity(intent, bundle);
+                } else if(((ListElem) item).action.equals("display-videos")) {
+                    Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
+                    intent.putExtra("listElem",((ListElem) item));
+                    Bundle bundle =
+                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+                                    .toBundle();
                     startActivity(intent, bundle);
                 }
 //                Intent intent = new Intent(getActivity(), MoreMoviesActivity.class);

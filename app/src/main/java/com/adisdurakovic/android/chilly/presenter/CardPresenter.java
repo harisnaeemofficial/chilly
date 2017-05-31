@@ -38,6 +38,7 @@ public class CardPresenter extends Presenter {
     public boolean isEpisode = false;
     private Drawable mDefaultCardImage;
 
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
         mDefaultBackgroundColor =

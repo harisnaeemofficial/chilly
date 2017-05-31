@@ -42,6 +42,12 @@ public class Chilly {
         return list;
     }
 
+    public List<Video> getPublicList(String list_type, String videoType, int limit) throws JSONException, IOException {
+        List<Video> list;
+        list = getVideos("movie", mContext.getResources().getString(R.string.trakt_api_url) + "/" + videoType + "s/" + list_type + "?extended=full&page=1&limit=" + String.valueOf(limit));
+        return list;
+    }
+
     public List<Video> getTrendingTVShows(int limit) throws JSONException, IOException {
 
         List<Video> list;
@@ -74,7 +80,7 @@ public class Chilly {
 
         for(int i = 0; i < trakt_genres.length(); i++) {
             JSONObject trakt_elem = trakt_genres.getJSONObject(i);
-            ListElem elem = new ListElem(trakt_elem.getString("name"), trakt_elem.getString("slug"), forElem, "genres");
+            ListElem elem = new ListElem(trakt_elem.getString("name"), trakt_elem.getString("slug"), forElem, "display-list", "genres");
             genres.add(elem);
         }
 
@@ -84,19 +90,18 @@ public class Chilly {
     public List<ListElem> getPublicList(String forElem) {
         List<ListElem> public_list = new ArrayList<>();
 
-        public_list.add(public_list.size(), new ListElem("Trending", "trending", forElem, ""));
-        public_list.add(public_list.size(), new ListElem("Popular", "popular", forElem, ""));
-        public_list.add(public_list.size(), new ListElem("Most played", "most-played", forElem, ""));
-        public_list.add(public_list.size(), new ListElem("Box office", "box office", forElem, ""));
+        public_list.add(public_list.size(), new ListElem("Trending", "public-trending", forElem, "display-videos", ""));
+        public_list.add(public_list.size(), new ListElem("Popular", "public-popular", forElem, "display-videos", ""));
+        public_list.add(public_list.size(), new ListElem("Most played", "public-played", forElem, "display-videos", ""));
+        public_list.add(public_list.size(), new ListElem("Box office", "public-boxoffice", forElem, "display-videos", ""));
 
         return public_list;
     }
 
 
 
-    public List<Video> getFromSearch(ListElem elem, int limit) throws JSONException, IOException {
+    public List<Video> getByFilter(ListElem elem, int limit) throws JSONException, IOException {
         List<Video> list;
-        System.out.print(elem);
         String trakt_url = mContext.getResources().getString(R.string.trakt_api_url) + "/search/" + elem.videoType;
         trakt_url += "?extended=full";
         if(elem.filterType.equals("query")) {

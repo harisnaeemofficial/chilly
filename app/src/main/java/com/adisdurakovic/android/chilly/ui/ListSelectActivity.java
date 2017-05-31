@@ -144,7 +144,7 @@ public class ListSelectActivity extends Activity implements ListResponse {
 
             Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
             int intid = (int) action.getId();
-            intent.putExtra("display-elem", lists.get(intid));
+            intent.putExtra("listElem", lists.get(intid));
             Bundle bundle =
                     ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
                             .toBundle();
