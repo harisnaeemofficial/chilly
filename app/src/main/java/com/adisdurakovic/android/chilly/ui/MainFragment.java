@@ -123,23 +123,28 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
 
         // Map category results from the database to ListRow objects.
         // This Adapter is used to render the MainFragment sidebar labels.
-        mCategoryRowAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        setAdapter(mCategoryRowAdapter);
 
-        loadRows();
-
-
-        updateRecommendations();
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+
         prepareBackgroundManager();
         setupUIElements();
         setupEventListeners();
         prepareEntranceTransition();
+
+        mCategoryRowAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+        loadRows();
+        setAdapter(mCategoryRowAdapter);
+
+
+        updateRecommendations();
     }
+
+
 
     @Override
     public void onResume() {
@@ -235,15 +240,17 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
         // Set search icon color.
         setSearchAffordanceColor(ContextCompat.getColor(getActivity(), R.color.search_opaque));
 
-//        setHeaderPresenterSelector(new PresenterSelector() {
-//            @Override
-//            public Presenter getPresenter(Object o) {
-//                return new IconHeaderItemPresenter();
-//            }
-//        });
+        setHeaderPresenterSelector(new PresenterSelector() {
+            @Override
+            public Presenter getPresenter(Object o) {
+                return new IconHeaderItemPresenter();
+            }
+        });
     }
 
     private void loadRows() {
+
+        mCategoryRowAdapter.clear();
 
         // HACK - add init row, without this, async-task won't populate adapter when HEADERS_DISABLED
         HeaderItem gridHeader = new HeaderItem("HACKINIT");
@@ -300,7 +307,7 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
             }
         });
 
-        setOnItemViewClickedListener(new ItemViewClickedListener(this));
+        setOnItemViewClickedListener(new ItemViewClickedListener());
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
     }
 
@@ -353,11 +360,6 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
 
-        private Fragment fragment;
-
-        public ItemViewClickedListener(Fragment frag) {
-            this.fragment = frag;
-        }
 
         @Override
         public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
