@@ -18,6 +18,10 @@ public class ListElem implements Parcelable {
     public Video tvshow;
     public Video season;
 
+    public ListElem() {
+
+    }
+
     public ListElem(String t, String s, String vt, String a, String ft) {
         this.title = t;
         this.slug = s;

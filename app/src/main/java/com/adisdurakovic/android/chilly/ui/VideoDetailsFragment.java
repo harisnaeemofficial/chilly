@@ -76,6 +76,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -83,7 +84,7 @@ import java.util.List;
  * VideoDetailsFragment extends DetailsFragment, a Wrapper fragment for leanback details screens.
  * It shows a detailed view of video and its metadata plus related videos.
  */
-public class VideoDetailsFragment extends DetailsFragment {
+public class VideoDetailsFragment extends DetailsFragment implements SeasonResponse {
     private static final int NO_NOTIFICATION = -1;
     private static final int ACTION_PLAY_NOW = 1;
     private static final int ACTION_PLAY_FROM = 2;
@@ -141,6 +142,14 @@ public class VideoDetailsFragment extends DetailsFragment {
     public void onStop() {
         mBackgroundManager.release();
         super.onStop();
+    }
+
+    @Override
+    public void onGetSeasons(List<Video> seasons) {
+        ArrayObjectAdapter seasonAdapter = new ArrayObjectAdapter(new CardPresenter());
+        HeaderItem header = new HeaderItem(0, getActivity().getString(R.string.tvshow_seasons));
+        seasonAdapter.addAll(seasonAdapter.size(), seasons);
+        mAdapter.add(new ListRow(header, seasonAdapter));
     }
 
     /**
@@ -373,7 +382,7 @@ public class VideoDetailsFragment extends DetailsFragment {
         System.out.println(mSelectedVideo);
 
         if(mSelectedVideo.videoType.equals("show")) {
-            new SeasonTask(this, mAdapter, mSelectedVideo).execute();
+            new SeasonTask(getActivity().getApplicationContext(), this, mSelectedVideo).execute();
         }
 
     }
@@ -388,7 +397,6 @@ public class VideoDetailsFragment extends DetailsFragment {
                 Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
                 intent.putExtra("season", video);
                 intent.putExtra("show", mSelectedVideo);
-                intent.putExtra("display-list", "episodes-for-show-season");
                 Bundle bundle =
                         ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
                                 .toBundle();
@@ -455,43 +463,37 @@ public class VideoDetailsFragment extends DetailsFragment {
 //}
 
 
+interface SeasonResponse {
+    void onGetSeasons(List<Video> seasons);
+}
+
 class SeasonTask extends AsyncTask<String, String, String> {
 
-    private final Activity activity;
     private final Video mSelectedVideo;
-    private final VideoDetailsFragment fragment;
-    private final ArrayObjectAdapter mAdapter;
     ArrayObjectAdapter show_seasons;
+    Chilly chilly;
 
-    public SeasonTask(VideoDetailsFragment fragment, ArrayObjectAdapter adapter, Video video) {
-        this.activity = fragment.getActivity();
+    SeasonResponse delegate;
+
+    List<Video> video_list = new ArrayList<>();
+
+    public SeasonTask(Context ctx, SeasonResponse del, Video video) {
         this.mSelectedVideo = video;
-        this.fragment = fragment;
-        this.mAdapter = adapter;
-        this.show_seasons = new ArrayObjectAdapter(new CardPresenter());
+        chilly = new Chilly(ctx);
+        this.delegate = del;
     }
 
     // Before starting background thread Show Progress Dialog
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        Toast.makeText(activity, "loading seasons", Toast.LENGTH_SHORT).show();
     }
 
     // Checking login in background
     protected String doInBackground(String... params) {
 
-        Chilly chilly = new Chilly(activity.getApplicationContext());
         try {
-            List<Video> seasons = chilly.getSeasonsForShow(mSelectedVideo);
-
-            System.out.println(seasons);
-
-            for(Iterator<Video> i = seasons.iterator(); i.hasNext();) {
-                Video v = i.next();
-                show_seasons.add(v);
-            }
-
+            video_list = chilly.getSeasonsForShow(mSelectedVideo);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -502,8 +504,6 @@ class SeasonTask extends AsyncTask<String, String, String> {
 
     // After completing background task Dismiss the progress dialog
     protected void onPostExecute(String file_url) {
-        HeaderItem header = new HeaderItem(0, fragment.getActivity().getString(R.string.tvshow_seasons));
-        mAdapter.add(new ListRow(header, show_seasons));
-
+        delegate.onGetSeasons(video_list);
     }
 }

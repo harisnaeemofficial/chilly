@@ -93,6 +93,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
             cp.isEpisode = true;
             gridPresenter.setNumberOfColumns(4);
             setTitle(mSelectedShow.title + ": " + mSelectedSeason.title);
+            elem = new ListElem();
             elem.tvshow = mSelectedShow;
             elem.season = mSelectedSeason;
         } else {
@@ -128,13 +129,13 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
             }
         }, 500);
 
-        setOnSearchClickedListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getActivity(), SearchActivity.class);
-                startActivity(intent);
-            }
-        });
+//        setOnSearchClickedListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent intent = new Intent(getActivity(), SearchActivity.class);
+//                startActivity(intent);
+//            }
+//        });
 
         setOnItemViewClickedListener(new ItemViewClickedListener());
         setOnItemViewSelectedListener(new ItemViewSelectedListener());
