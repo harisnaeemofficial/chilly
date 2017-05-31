@@ -34,24 +34,32 @@ import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.data.Chilly;
+import com.adisdurakovic.android.chilly.data.ListElem;
+import com.adisdurakovic.android.chilly.data.StreamGrabber;
+import com.adisdurakovic.android.chilly.model.Video;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 
 /**
  * Activity that showcases different aspects of GuidedStepFragments.
  */
-public class MoreMoviesActivity extends Activity {
+public class ListSelectActivity extends Activity implements ListResponse {
 
     private static String displayList;
 
-    private static final String[] MOVIE_LISTS = {
+    private static String[] MOVIE_LISTS = {
             "Trending",
             "Popular",
             "Box Office",
             "Collection",
             "Watchlist"
     };
+
+    private static List<ListElem> lists = new ArrayList<>();
 
     private static final String[] MOVIE_LISTS_INTENTVARS = {
             "movies_trending",
@@ -70,11 +78,15 @@ public class MoreMoviesActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (null == savedInstanceState) {
-            GuidedStepFragment.addAsRoot(this, new FirstStepFragment(), android.R.id.content);
+            ListElem elem = (ListElem) getIntent().getParcelableExtra("listElem");
+            new ListTask(getApplicationContext(), this, elem).execute();
         }
-        displayList = getIntent().getStringExtra("display-list");
+
+
 
     }
+
+
 
     private static void addAction(List<GuidedAction> actions, long id, String title, String desc) {
         actions.add(new GuidedAction.Builder()
@@ -82,6 +94,12 @@ public class MoreMoviesActivity extends Activity {
                 .title(title)
                 .description(desc)
                 .build());
+    }
+
+    @Override
+    public void onListGrab(List<ListElem> output) {
+        lists = output;
+        GuidedStepFragment.addAsRoot(this, new FirstStepFragment(), android.R.id.content);
     }
 
 
@@ -107,19 +125,26 @@ public class MoreMoviesActivity extends Activity {
         @Override
         public void onCreateActions(@NonNull List<GuidedAction> actions, Bundle savedInstanceState) {
 
-            for (int i = 0; i < MOVIE_LISTS.length; i++) {
-                addAction(actions, i, MOVIE_LISTS[i], "");
+//            for (int i = 0; i < MOVIE_LISTS.length; i++) {
+//                addAction(actions, i, MOVIE_LISTS[i], "");
+//            }
+            long x = 0;
+            for(Iterator<ListElem> i = lists.iterator(); i.hasNext();) {
+                ListElem elem = i.next();
+                addAction(actions, x, elem.title, "");
+                x++;
             }
 
-
         }
+
+
 
         @Override
         public void onGuidedActionClicked(GuidedAction action) {
 
             Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
             int intid = (int) action.getId();
-            intent.putExtra("display-list",MOVIE_LISTS_INTENTVARS[intid]);
+            intent.putExtra("display-elem", lists.get(intid));
             Bundle bundle =
                     ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
                             .toBundle();
@@ -131,4 +156,54 @@ public class MoreMoviesActivity extends Activity {
 
 }
 
+interface ListResponse {
+    void onListGrab(List<ListElem> output);
+}
 
+
+class ListTask extends AsyncTask<String, String, String> {
+
+    ListElem item;
+    ListResponse delegate;
+    List<ListElem> list = new ArrayList<ListElem>();
+    Chilly chilly;
+
+    public ListTask(Context context, ListResponse del, ListElem item) {
+        this.item = item;
+        this.delegate = del;
+        chilly = new Chilly(context);
+    }
+
+    // Before starting background thread Show Progress Dialog
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+    }
+
+    // Checking login in background
+    protected String doInBackground(String... params) {
+
+
+
+        try {
+            switch(item.slug) {
+                case "genres":
+                    list = chilly.getGenres(item.videoType);
+                    break;
+                case "trakt-public-list":
+                    list = chilly.getPublicList(item.videoType);
+                    break;
+            }
+
+        } catch (Exception e) {
+
+        }
+        return "";
+
+    }
+
+    // After completing background task Dismiss the progress dialog
+    protected void onPostExecute(String somestring) {
+        delegate.onListGrab(list);
+    }
+}

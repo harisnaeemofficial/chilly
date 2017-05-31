@@ -64,6 +64,7 @@
     <!--Trakt -->
     <string name="trakt_api_version">2</string>
     <string name="trakt_api_key">0382d8815ebf303ee57a69a88b02348afaf40bcb39b7053da6bb2da36ee800a3</string>
+    <string name="trakt_api_secret">078b464ad3d02eefb44c0259dea679b40074dbfef0fd01947c9b59fc546010de</string>
     <string name="trakt_api_url">&trakt_api_url_base;</string>
 
     <!-- TMDB -->

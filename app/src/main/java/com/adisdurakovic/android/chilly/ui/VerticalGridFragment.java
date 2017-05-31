@@ -43,6 +43,7 @@ import android.widget.Toast;
 import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.data.Chilly;
 import com.adisdurakovic.android.chilly.data.FetchVideoService;
+import com.adisdurakovic.android.chilly.data.ListElem;
 import com.adisdurakovic.android.chilly.data.VideoContract;
 import com.adisdurakovic.android.chilly.model.Video;
 import com.adisdurakovic.android.chilly.model.VideoCursorMapper;
@@ -65,6 +66,8 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
     private ArrayObjectAdapter mEpisodeadapter;
     private Video mSelectedShow;
     private Video mSelectedSeason;
+    String intentvar;
+    ListElem intentelem;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -85,13 +88,16 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         VerticalGridPresenter gridPresenter = new VerticalGridPresenter();
         gridPresenter.setNumberOfColumns(5);
 
-
-        if(getActivity().getIntent().getStringExtra("display-list").equals("episodes-for-show-season")) {
+        intentvar = getActivity().getIntent().getStringExtra("display-list");
+        intentelem = (ListElem) getActivity().getIntent().getParcelableExtra("display-elem");
+        if(intentvar != null && intentvar.equals("episodes-for-show-season")) {
             cp.isEpisode = true;
             gridPresenter.setNumberOfColumns(4);
             setTitle(mSelectedShow.title + ": " + mSelectedSeason.title);
-        } else {
-            setTitle(getActivity().getString(getResources().getIdentifier(getActivity().getIntent().getStringExtra("display-list"), "string", "com.adisdurakovic.android.chilly")));
+        }
+
+        if(intentelem != null) {
+            setTitle(intentelem.title);
         }
 
         mEpisodeadapter = new ArrayObjectAdapter(cp);
@@ -112,7 +118,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
 
 
 
-        new MovieTVShowLoader(this, mEpisodeadapter, getActivity().getIntent().getStringExtra("display-list"), mSelectedShow, mSelectedSeason).execute();
+        new MovieTVShowLoader(this, mEpisodeadapter, intentvar, intentelem, mSelectedShow, mSelectedSeason).execute();
 
 
         // After 500ms, start the animation to transition the cards into view.
@@ -174,10 +180,11 @@ class MovieTVShowLoader extends AsyncTask<String, String, String> {
     private String display_list;
     private Video tvshow;
     private Video tvseason;
+    private ListElem listelem;
 
 
 
-    public MovieTVShowLoader(VerticalGridFragment fragment, ArrayObjectAdapter adapter, String display_list, Video show, Video season) {
+    public MovieTVShowLoader(VerticalGridFragment fragment, ArrayObjectAdapter adapter, String display_list, ListElem elem, Video show, Video season) {
         this.activity = fragment.getActivity();
         this.mCategoryRowAdapter = adapter;
         this.fragment = fragment;
@@ -185,6 +192,7 @@ class MovieTVShowLoader extends AsyncTask<String, String, String> {
         this.display_list = display_list;
         this.tvshow = show;
         this.tvseason = season;
+        this.listelem = elem;
     }
 
     // Before starting background thread Show Progress Dialog
@@ -200,17 +208,30 @@ class MovieTVShowLoader extends AsyncTask<String, String, String> {
 
         Chilly chilly = new Chilly(activity.getApplicationContext());
 
+
+
         try {
-            switch(display_list) {
-                case "movies_trending":
-                    video_list = chilly.getTrendingMovies(40);
-                    break;
-                case "tvshows-trending":
-                    video_list = chilly.getTrendingTVShows(40);
-                    break;
-                case "episodes-for-show-season":
-                    video_list = chilly.getEpisodesForShowSeason(tvshow, tvseason);
+
+            if(display_list != null) {
+                switch(display_list) {
+                    case "movies_trending":
+                        video_list = chilly.getTrendingMovies(40);
+                        break;
+                    case "tvshows-trending":
+                        video_list = chilly.getTrendingTVShows(40);
+                        break;
+                    case "episodes-for-show-season":
+                        video_list = chilly.getEpisodesForShowSeason(tvshow, tvseason);
+                        break;
+                }
             }
+
+            if(listelem != null) {
+                video_list = chilly.getFromSearch(listelem, 40);
+            }
+
+
+
 
         } catch (Exception e) {
             e.printStackTrace();

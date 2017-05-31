@@ -70,7 +70,6 @@ public final class VideoCursorMapper extends CursorMapper {
         return new Video.VideoBuilder()
                 .id(id)
                 .title(title)
-                .category(category)
                 .description(desc)
                 .videoUrl(videoUrl)
                 .bgImageUrl(bgImageUrl)

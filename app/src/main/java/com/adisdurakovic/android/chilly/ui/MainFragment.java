@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -30,6 +31,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
@@ -51,6 +53,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.data.Chilly;
+import com.adisdurakovic.android.chilly.data.ListElem;
 import com.adisdurakovic.android.chilly.data.StreamGrabber;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
@@ -81,7 +84,7 @@ import java.util.TimerTask;
 /*
  * Main class to show BrowseFragment with header and rows of videos
  */
-public class MainFragment extends BrowseFragment {
+public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
     private static final int BACKGROUND_UPDATE_DELAY = 300;
     private final Handler mHandler = new Handler();
     private ArrayObjectAdapter mCategoryRowAdapter;
@@ -128,7 +131,64 @@ public class MainFragment extends BrowseFragment {
         loadRows();
 
 
-//        updateRecommendations();
+        updateRecommendations();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+
+        // check if valid trakt is found and reset all buttons
+
+        if(mCategoryRowAdapter.size() > 0) {
+            for(int i = 0; i < mCategoryRowAdapter.size(); i++) {
+                ListRow lr = (ListRow) mCategoryRowAdapter.get(i);
+                if(lr.getHeaderItem().getName().equals("MORE MOVIES")) {
+                    mCategoryRowAdapter.removeItems(i, 1);
+                    prepareMoreMovieButtons(i);
+                }
+                if(lr.getHeaderItem().getName().equals("MORE TV SHOWS")) {
+                    mCategoryRowAdapter.removeItems(i, 1);
+                    prepareMoreTVShowButtons(i);
+                }
+            }
+        }
+    }
+
+    private void prepareMoreMovieButtons(int pos) {
+        HeaderItem header_more_movies = new HeaderItem("MORE MOVIES");
+        ArrayObjectAdapter more_movies = new ArrayObjectAdapter(new GridItemPresenter());
+        more_movies.add(new ListElem("Browse Movies", "trakt-public-list", "movie", "list-select"));
+        more_movies.add(new ListElem("Movie Genres", "genres", "movie", "list-select"));
+
+        if(hasValidTraktToken()) {
+            more_movies.add(new ListElem("Collection", "trakt-collection", "movie", "display-movies"));
+            more_movies.add(new ListElem("Watchlist", "trakt-watchlist", "movie", "display-movies"));
+        }
+
+        mCategoryRowAdapter.add(pos, new ListRow(header_more_movies, more_movies));
+    }
+
+    private void prepareMoreTVShowButtons(int pos) {
+        HeaderItem header_more_tvshows = new HeaderItem("MORE TV SHOWS");
+        ArrayObjectAdapter more_tvshows = new ArrayObjectAdapter(new GridItemPresenter());
+        more_tvshows.add(new ListElem("Browse TV Shows", "trakt-public-list", "show", "list-select"));
+        more_tvshows.add(new ListElem("TV Show Genres", "genres", "show", "list-select"));
+
+        if(hasValidTraktToken()) {
+            more_tvshows.add(new ListElem("Collection", "trakt-collection", "show", "display-movies"));
+            more_tvshows.add(new ListElem("Watchlist", "trakt-watchlist", "show", "display-movies"));
+        }
+
+        mCategoryRowAdapter.add(pos, new ListRow(header_more_tvshows, more_tvshows));
+    }
+
+    private boolean hasValidTraktToken() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+        String string_token = sharedPreferences.getString("trakt_token", "NOTOKEN");
+
+        return !string_token.equals("NOTOKEN");
     }
 
     @Override
@@ -178,15 +238,49 @@ public class MainFragment extends BrowseFragment {
 
     private void loadRows() {
 
-        HeaderItem gridHeader = new HeaderItem("");
+        // HACK - add init row, without this, async-task won't populate adapter when HEADERS_DISABLED
+        HeaderItem gridHeader = new HeaderItem("HACKINIT");
         GridItemPresenter gridPresenter = new GridItemPresenter();
         ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(gridPresenter);
         ListRow row = new ListRow(gridHeader, gridRowAdapter);
         mCategoryRowAdapter.add(row);
 
-        new HomeLoader(this, mCategoryRowAdapter).execute();
+
+        new HomeLoaderTask(this, getActivity().getApplicationContext()).execute();
 
 
+    }
+
+    @Override
+    public void onLoadFinish(List<Video> start_movies, List<Video> start_tvshows) {
+
+
+        HeaderItem header_movies = new HeaderItem(0, "MOVIES");
+        HeaderItem header_tvshows = new HeaderItem(1, "TV SHOWS");
+
+
+
+        ArrayObjectAdapter movies = new ArrayObjectAdapter(new CardPresenter());
+        ArrayObjectAdapter tvshows = new ArrayObjectAdapter(new CardPresenter());
+
+        movies.addAll(movies.size(), start_movies);
+        tvshows.addAll(tvshows.size(), start_tvshows);
+
+        mCategoryRowAdapter.add(new ListRow(header_movies, movies));
+        prepareMoreMovieButtons(mCategoryRowAdapter.size());
+        mCategoryRowAdapter.add(new ListRow(header_tvshows, tvshows));
+        prepareMoreTVShowButtons(mCategoryRowAdapter.size());
+
+        // HACK - remove init row
+        for(int i = 0; i < mCategoryRowAdapter.size(); i++) {
+            ListRow lr = (ListRow) mCategoryRowAdapter.get(i);
+            if(lr.getHeaderItem().getName().equals("HACKINIT")) {
+                mCategoryRowAdapter.removeItems(i, 1);
+            }
+        }
+
+
+        startEntranceTransition();
     }
 
     private void setupEventListeners() {
@@ -274,6 +368,25 @@ public class MainFragment extends BrowseFragment {
                 getActivity().startActivity(intent, bundle);
             } else if (item instanceof String) {
 
+            } else if (item instanceof ListElem) {
+
+                if(((ListElem) item).filterType.equals("list-select")) {
+                    Intent intent = new Intent(getActivity(), ListSelectActivity.class);
+                    intent.putExtra("listElem",((ListElem) item));
+                    Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity()).toBundle();
+                    startActivity(intent, bundle);
+                }
+//                Intent intent = new Intent(getActivity(), MoreMoviesActivity.class);
+//                Bundle bundle =
+//                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+//                                    .toBundle();
+//                startActivity(intent, bundle);
+
+
+//                LoginFragment loginFragment = new LoginFragment();
+//                    getFragmentManager().beginTransaction().replace(R.id.main_frame, loginFragment)
+//                            .addToBackStack(null).commit();
+
 
 //               new MoreLoader(fragment, (String) item);
 
@@ -326,22 +439,22 @@ public class MainFragment extends BrowseFragment {
     }
 }
 
+interface HomeLoaderResponse {
+    void onLoadFinish(List<Video> start_movies, List<Video> start_tvshows);
+}
+
 
 // Background ASYNC Task to login by making HTTP Request
-class HomeLoader extends AsyncTask<String, String, String> {
+class HomeLoaderTask extends AsyncTask<String, String, String> {
 
-    private final Activity activity;
-    private final ArrayObjectAdapter mCategoryRowAdapter;
-    private final MainFragment fragment;
-    ArrayObjectAdapter start_movies;
-    ArrayObjectAdapter start_tvshows;
+    List<Video> start_movies;
+    List<Video> start_tvshows;
+    HomeLoaderResponse delegate = null;
+    Chilly chilly = null;
 
-    public HomeLoader(MainFragment fragment, ArrayObjectAdapter adapter) {
-        this.activity = fragment.getActivity();
-        this.mCategoryRowAdapter = adapter;
-        this.fragment = fragment;
-        this.start_movies = new ArrayObjectAdapter(new CardPresenter());
-        this.start_tvshows = new ArrayObjectAdapter(new CardPresenter());
+    public HomeLoaderTask(HomeLoaderResponse del, Context ctx) {
+        this.delegate = del;
+        chilly = new Chilly(ctx);
     }
 
     // Before starting background thread Show Progress Dialog
@@ -354,23 +467,9 @@ class HomeLoader extends AsyncTask<String, String, String> {
     // Checking login in background
     protected String doInBackground(String... params) {
 
-
-        Chilly chilly = new Chilly(activity.getApplicationContext());
-
         try {
-            List<Video> movies = chilly.getTrendingMovies(10);
-            List<Video> tvshows = chilly.getTrendingTVShows(10);
-
-            for(Iterator<Video> i = movies.iterator(); i.hasNext();) {
-                Video v = i.next();
-                start_movies.add(v);
-            }
-
-            for(Iterator<Video> i = tvshows.iterator(); i.hasNext();) {
-                Video v = i.next();
-                start_tvshows.add(v);
-            }
-
+            start_movies = chilly.getTrendingMovies(10);
+            start_tvshows = chilly.getTrendingTVShows(10);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -381,36 +480,7 @@ class HomeLoader extends AsyncTask<String, String, String> {
 
     // After completing background task Dismiss the progress dialog
     protected void onPostExecute(String file_url) {
-
-        HeaderItem header_movies = new HeaderItem(0, "MOVIES");
-        HeaderItem header_tvshows = new HeaderItem(1, "TV SHOWS");
-        HeaderItem gridHeader_movies = new HeaderItem("MORE MOVIES");
-        HeaderItem gridHeader_tvshows = new HeaderItem("MORE TV SHOWS");
-
-        GridItemPresenter gridPresenter_movies = new GridItemPresenter();
-        ArrayObjectAdapter gridRowAdapter_movies = new ArrayObjectAdapter(gridPresenter_movies);
-        gridRowAdapter_movies.add("Browse Movies");
-        gridRowAdapter_movies.add("Movie Genres");
-        ListRow row_more_movies = new ListRow(gridHeader_movies, gridRowAdapter_movies);
-
-
-        GridItemPresenter gridPresenter_tvshows = new GridItemPresenter();
-        ArrayObjectAdapter gridRowAdapter_tvshows = new ArrayObjectAdapter(gridPresenter_tvshows);
-        gridRowAdapter_tvshows.add("Browse TV Shows");
-        gridRowAdapter_tvshows.add("TV Show Genres");
-        ListRow row_more_tvshows = new ListRow(gridHeader_tvshows, gridRowAdapter_movies);
-
-
-        mCategoryRowAdapter.add(new ListRow(header_movies, start_movies));
-        mCategoryRowAdapter.add(row_more_movies);
-        mCategoryRowAdapter.add(new ListRow(header_tvshows, start_tvshows));
-        mCategoryRowAdapter.add(row_more_tvshows);
-
-
-        fragment.startEntranceTransition();
-
+        delegate.onLoadFinish(start_movies, start_tvshows);
 
     }
 }
-
-

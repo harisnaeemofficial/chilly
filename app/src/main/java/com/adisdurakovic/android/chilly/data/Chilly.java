@@ -15,6 +15,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,22 +68,54 @@ public class Chilly {
         return list;
     }
 
-    public List<String> getGenres(String forElem) throws JSONException, IOException {
-        List<String> genres = new ArrayList<>();
-        JSONArray trakt_genres = getListFromTrakt(mContext.getResources().getString(R.string.trakt_api_url) + "/genres/" + forElem);
+    public List<ListElem> getGenres(String forElem) throws JSONException, IOException {
+        List<ListElem> genres = new ArrayList<>();
+        JSONArray trakt_genres = getListFromTrakt(mContext.getResources().getString(R.string.trakt_api_url) + "/genres/" + forElem + "s");
 
         for(int i = 0; i < trakt_genres.length(); i++) {
             JSONObject trakt_elem = trakt_genres.getJSONObject(i);
-            genres.add(trakt_elem.getString("name"));
+            ListElem elem = new ListElem(trakt_elem.getString("name"), trakt_elem.getString("slug"), forElem, "genres");
+            genres.add(elem);
         }
 
         return genres;
+    }
+
+    public List<ListElem> getPublicList(String forElem) {
+        List<ListElem> public_list = new ArrayList<>();
+
+        public_list.add(public_list.size(), new ListElem("Trending", "trending", forElem, ""));
+        public_list.add(public_list.size(), new ListElem("Popular", "popular", forElem, ""));
+        public_list.add(public_list.size(), new ListElem("Most played", "most-played", forElem, ""));
+        public_list.add(public_list.size(), new ListElem("Box office", "box office", forElem, ""));
+
+        return public_list;
+    }
+
+
+
+    public List<Video> getFromSearch(ListElem elem, int limit) throws JSONException, IOException {
+        List<Video> list;
+        System.out.print(elem);
+        String trakt_url = mContext.getResources().getString(R.string.trakt_api_url) + "/search/" + elem.videoType;
+        trakt_url += "?extended=full";
+        if(elem.filterType.equals("query")) {
+            trakt_url += "&" + elem.filterType + "=" + elem.slug;
+        } else {
+            trakt_url += "&query=&" + elem.filterType + "=" + elem.slug;
+        }
+        trakt_url += "&limit=" + limit;
+
+        list = getVideos(elem.videoType, trakt_url);
+        return list;
     }
 
 
     private List<Video> getVideos(String type, String trakt_list_url) throws JSONException, IOException {
 
         List<Video> videos = new ArrayList<>();
+
+        System.out.println(trakt_list_url);
 
         JSONArray data_list = getListFromTrakt(trakt_list_url);
         System.out.println(trakt_list_url);
@@ -186,12 +219,54 @@ public class Chilly {
 
         HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
         urlConnection.setRequestMethod("GET");
+        urlConnection.setRequestProperty("Content-Type","application/json");
         urlConnection.setRequestProperty("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version));
         urlConnection.setRequestProperty("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key));
 
         list = new JSONArray(HTTPGrabber.getContentFromURL(urlConnection));
 
         return list;
+    }
+
+    public JSONObject getCodeFromTrakt() throws JSONException, IOException {
+        String url = mContext.getResources().getString(R.string.trakt_api_url) + "/oauth/device/code";
+        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
+        urlConnection.setRequestMethod("POST");
+        urlConnection.setRequestProperty("Content-Type","application/json");
+
+        JSONObject cid = new JSONObject();
+        cid.put("client_id", mContext.getResources().getString(R.string.trakt_api_key));
+
+        OutputStreamWriter ap_osw= new OutputStreamWriter(urlConnection.getOutputStream());
+        ap_osw.write(cid.toString());
+        ap_osw.flush();
+        ap_osw.close();
+
+
+        return new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
+    }
+
+
+    public JSONObject getTokenFromTrakt(String device_code) throws JSONException, IOException {
+        String url = mContext.getResources().getString(R.string.trakt_api_url) + "/oauth/device/token";
+        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
+        urlConnection.setRequestMethod("POST");
+        urlConnection.setRequestProperty("Content-Type","application/json");
+
+        JSONObject cid = new JSONObject();
+        cid.put("client_id", mContext.getResources().getString(R.string.trakt_api_key));
+        cid.put("client_secret", mContext.getResources().getString(R.string.trakt_api_secret));
+        cid.put("code", device_code);
+
+        System.out.println(cid);
+
+        OutputStreamWriter ap_osw= new OutputStreamWriter(urlConnection.getOutputStream());
+        ap_osw.write(cid.toString());
+        ap_osw.flush();
+        ap_osw.close();
+
+
+        return new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
     }
 
 
@@ -271,14 +346,6 @@ public class Chilly {
         return media;
     }
 
-
-    private File getDiskCacheDir(String uniqueName) {
-        // Check if media is mounted or storage is built-in, if so, try and use external cache dir
-        // otherwise use internal cache dir
-        final String cachePath = mContext.getCacheDir().getPath();
-
-        return new File(cachePath + File.separator + uniqueName);
-    }
 
 
     private JSONObject getDataFromTMDB(String url) throws IOException, JSONException {

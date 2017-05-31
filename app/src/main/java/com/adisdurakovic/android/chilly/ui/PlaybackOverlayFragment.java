@@ -211,7 +211,7 @@ public class PlaybackOverlayFragment
         updatePlaybackRow();
         setAdapter(mRowsAdapter);
 
-        new PlayStreamTask(this, mSelectedVideo).execute();
+        new StreamTask(this, mSelectedVideo).execute();
 
 //        startPlaying();
 
@@ -812,13 +812,13 @@ interface StreamResponse {
 }
 
 
-class PlayStreamTask extends AsyncTask<String, String, String> {
+class StreamTask extends AsyncTask<String, String, String> {
 
     private final Video mSelectedVideo;
     StreamResponse delegate;
     String streamurl = "";
 
-    public PlayStreamTask(StreamResponse del, Video video) {
+    public StreamTask(StreamResponse del, Video video) {
         this.mSelectedVideo = video;
         this.delegate = del;
     }

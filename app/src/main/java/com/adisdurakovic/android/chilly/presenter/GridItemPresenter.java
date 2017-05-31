@@ -28,6 +28,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.adisdurakovic.android.chilly.R;
+import com.adisdurakovic.android.chilly.data.ListElem;
 import com.adisdurakovic.android.chilly.ui.MainFragment;
 
 public class GridItemPresenter extends Presenter {
@@ -76,7 +77,11 @@ public class GridItemPresenter extends Presenter {
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, Object item) {
-        ((TextView) viewHolder.view).setText((String) item);
+        if(item instanceof ListElem) {
+            ((TextView) viewHolder.view).setText(((ListElem) item).title);
+        } else {
+            ((TextView) viewHolder.view).setText((String) item);
+        }
     }
 
     @Override
