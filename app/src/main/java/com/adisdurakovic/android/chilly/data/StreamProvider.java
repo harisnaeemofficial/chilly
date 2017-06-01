@@ -12,7 +12,28 @@ import java.util.List;
 
 public class StreamProvider {
 
-    public List<StreamSource> getMovieStreamURL(Video video) throws IOException {
+    public List<StreamSource> getStreamSources(Video video) throws IOException {
+        List<StreamSource> urllist = new ArrayList<>();
+
+
+        switch(video.videoType) {
+            case "movie":
+                urllist = getMovieSources(video);
+                break;
+            case "episode":
+                urllist = getEpisodeSources(video);
+                break;
+        }
+
+
+        return urllist;
+    }
+
+    public List<StreamSource> getMovieSources(Video video) throws IOException {
+        return new ArrayList<>();
+    }
+
+    public List<StreamSource> getEpisodeSources(Video video) throws IOException {
         return new ArrayList<>();
     }
 

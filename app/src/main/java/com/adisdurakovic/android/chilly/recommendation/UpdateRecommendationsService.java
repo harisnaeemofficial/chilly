@@ -25,10 +25,12 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.app.recommendation.ContentRecommendation;
 import android.util.Log;
 
+import com.adisdurakovic.android.chilly.data.Chilly;
 import com.bumptech.glide.Glide;
 import com.adisdurakovic.android.chilly.BuildConfig;
 import com.adisdurakovic.android.chilly.R;
@@ -37,6 +39,9 @@ import com.adisdurakovic.android.chilly.model.Video;
 import com.adisdurakovic.android.chilly.model.VideoCursorMapper;
 import com.adisdurakovic.android.chilly.ui.VideoDetailsActivity;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /*
@@ -63,63 +68,118 @@ public class UpdateRecommendationsService extends IntentService {
         }
     }
 
+
     @Override
     protected void onHandleIntent(Intent intent) {
-        // Generate recommendations, but only if recommendations are enabled
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        if (!sharedPreferences.getBoolean(getString(R.string.pref_key_recommendations), true)) {
-            Log.d(TAG, "Recommendations disabled");
-            mNotifManager.cancelAll();
-            return;
+
+        Chilly chilly = new Chilly(getApplicationContext());
+
+        List<Video> recommendations = new ArrayList<>();
+
+        try {
+            recommendations = chilly.getUserRecommendations();
+        } catch (Exception e) {
+
         }
+
         Resources res = getResources();
         int cardWidth = res.getDimensionPixelSize(R.dimen.card_width);
         int cardHeight = res.getDimensionPixelSize(R.dimen.card_height);
         ContentRecommendation.Builder builder = new ContentRecommendation.Builder()
-                .setBadgeIcon(R.drawable.videos_by_google_icon);
+                .setBadgeIcon(R.drawable.chilly_icon_small);
 
-        Cursor cursor = getContentResolver().query(
-                VideoContract.VideoEntry.CONTENT_URI,
-                null, // projection
-                null, // selection
-                null, // selection clause
-                "RANDOM() LIMIT " + MAX_RECOMMENDATIONS // sort order
-        );
+        for(Iterator<Video> i = recommendations.iterator(); i.hasNext();) {
+            Video video = i.next();
 
-        if (cursor != null && cursor.moveToNext()) {
             try {
-                do {
-                    Video video = (Video) mVideoCursorMapper.convert(cursor);
-                    int id = Long.valueOf(video.id).hashCode();
 
-                    builder.setIdTag("Video" + id)
-                            .setTitle(video.title)
-                            .setText(getString(R.string.popular_header))
-                            .setContentIntentData(ContentRecommendation.INTENT_TYPE_ACTIVITY,
-                                    buildPendingIntent(video, id), 0, null);
+                int id = Long.valueOf(video.id).hashCode();
 
-                    Bitmap bitmap = Glide.with(getApplication())
-                            .load(video.cardImageUrl)
-                            .asBitmap()
-                            .into(cardWidth, cardHeight) // Only use for synchronous .get()
-                            .get();
-                    builder.setContentImage(bitmap);
 
-                    // Create an object holding all the information used to recommend the content.
-                    ContentRecommendation rec = builder.build();
-                    Notification notification = rec.getNotificationObject(getApplicationContext());
+                builder.setIdTag("Video" + id)
+                        .setTitle(video.title)
+                        .setText("Recommended")
+                        .setContentIntentData(ContentRecommendation.INTENT_TYPE_ACTIVITY,
+                                buildPendingIntent(video, id), 0, null);
 
-                    if (BuildConfig.DEBUG) Log.d(TAG, "Recommending video " + video.title);
+                Bitmap bitmap = Glide.with(getApplication())
+                        .load(video.cardImageUrl)
+                        .asBitmap()
+                        .into(cardWidth, cardHeight) // Only use for synchronous .get()
+                        .get();
+                builder.setContentImage(bitmap);
 
-                    // Recommend the content by publishing the notification.
-                    mNotifManager.notify(id, notification);
-                } while (cursor.moveToNext());
+                // Create an object holding all the information used to recommend the content.
+                ContentRecommendation rec = builder.build();
+                Notification notification = rec.getNotificationObject(getApplicationContext());
+
+                if (BuildConfig.DEBUG) Log.d(TAG, "Recommending video " + video.title);
+
+                // Recommend the content by publishing the notification.
+                mNotifManager.notify(id, notification);
+
             } catch (InterruptedException | ExecutionException e) {
                 Log.e(TAG, "Could not create recommendation.", e);
-            } finally {
-                cursor.close();
             }
+
         }
+
+
+        // Generate recommendations, but only if recommendations are enabled
+//        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+//        if (!sharedPreferences.getBoolean(getString(R.string.pref_key_recommendations), true)) {
+//            Log.d(TAG, "Recommendations disabled");
+//            mNotifManager.cancelAll();
+//            return;
+//        }
+//        Resources res = getResources();
+//        int cardWidth = res.getDimensionPixelSize(R.dimen.card_width);
+//        int cardHeight = res.getDimensionPixelSize(R.dimen.card_height);
+//        ContentRecommendation.Builder builder = new ContentRecommendation.Builder()
+//                .setBadgeIcon(R.drawable.videos_by_google_icon);
+//
+//        Cursor cursor = getContentResolver().query(
+//                VideoContract.VideoEntry.CONTENT_URI,
+//                null, // projection
+//                null, // selection
+//                null, // selection clause
+//                "RANDOM() LIMIT " + MAX_RECOMMENDATIONS // sort order
+//        );
+//
+//        if (cursor != null && cursor.moveToNext()) {
+//            try {
+//                do {
+//                    Video video = (Video) mVideoCursorMapper.convert(cursor);
+//                    int id = Long.valueOf(video.id).hashCode();
+//
+//                    builder.setIdTag("Video" + id)
+//                            .setTitle(video.title)
+//                            .setText(getString(R.string.popular_header))
+//                            .setContentIntentData(ContentRecommendation.INTENT_TYPE_ACTIVITY,
+//                                    buildPendingIntent(video, id), 0, null);
+//
+//                    Bitmap bitmap = Glide.with(getApplication())
+//                            .load(video.cardImageUrl)
+//                            .asBitmap()
+//                            .into(cardWidth, cardHeight) // Only use for synchronous .get()
+//                            .get();
+//                    builder.setContentImage(bitmap);
+//
+//                    // Create an object holding all the information used to recommend the content.
+//                    ContentRecommendation rec = builder.build();
+//                    Notification notification = rec.getNotificationObject(getApplicationContext());
+//
+//                    if (BuildConfig.DEBUG) Log.d(TAG, "Recommending video " + video.title);
+//
+//                    // Recommend the content by publishing the notification.
+//                    mNotifManager.notify(id, notification);
+//                } while (cursor.moveToNext());
+//            } catch (InterruptedException | ExecutionException e) {
+//                Log.e(TAG, "Could not create recommendation.", e);
+//            } finally {
+//                cursor.close();
+//            }
+//        }
     }
 
     private Intent buildPendingIntent(Video video, int id) {

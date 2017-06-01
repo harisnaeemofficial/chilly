@@ -34,8 +34,10 @@ public class StreamGrabber {
             StreamProvider provider = i.next();
 //            source_list.add(provider.getMovieStreamURL(video));
 //            source_list.addAll(provider.getMovieStreamURL(video));
-            for(Iterator<StreamProvider.StreamSource> j = provider.getMovieStreamURL(video).iterator(); j.hasNext();) {
+            for(Iterator<StreamProvider.StreamSource> j = provider.getStreamSources(video).iterator(); j.hasNext();) {
                 StreamProvider.StreamSource currentsource = j.next();
+
+                System.out.println(currentsource);
 
                 if(source_list.size() > 0 && Long.valueOf(currentsource.quality) > Long.valueOf(source_list.get(0).quality)) {
                     source_list.add(0, currentsource);
@@ -52,6 +54,7 @@ public class StreamGrabber {
 
         String source_url = "";
         List<StreamProvider.StreamSource> source_list = getSources(video);
+
 
         if(source_list.size() > 0) {
             return source_list.get(0).url;

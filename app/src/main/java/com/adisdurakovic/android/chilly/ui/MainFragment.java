@@ -260,7 +260,7 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
         mCategoryRowAdapter.add(row);
 
 
-        new HomeLoaderTask(this, getActivity().getApplicationContext()).execute();
+        new HomeLoaderTask(getActivity().getApplicationContext(), this).execute();
 
 
     }
@@ -483,7 +483,7 @@ class HomeLoaderTask extends AsyncTask<String, String, String> {
     HomeLoaderResponse delegate = null;
     Chilly chilly = null;
 
-    public HomeLoaderTask(HomeLoaderResponse del, Context ctx) {
+    public HomeLoaderTask(Context ctx, HomeLoaderResponse del) {
         this.delegate = del;
         chilly = new Chilly(ctx);
     }

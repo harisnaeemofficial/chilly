@@ -17,13 +17,13 @@
 <resources>
     <color name="background_gradient_start">#ff00ff</color>
     <color name="background_gradient_end">#ff00ff</color>
-    <color name="fastlane_background">#1b252b</color>
+    <color name="fastlane_background">#C30037</color>
     <color name="search_opaque">#C32A2F</color>
-    <color name="selected_background">#C32A2F</color>
+    <color name="selected_background">#FFC30037</color>
     <color name="griditem_background">#C32A2F</color>
-    <color name="videodetails_background">#e61b252b</color>
+    <color name="videodetails_background">#C30037</color>
 
-    <color name="default_background">#1b252b</color>
-    <color name="icon_background">#4A4F51</color>
+    <color name="default_background">#AAC30037</color>
+    <color name="icon_background">#C30037</color>
     <color name="icon_alt_background">#2A2F51</color>
 </resources>

@@ -58,6 +58,14 @@ public class Chilly {
         return list;
     }
 
+    public List<Video> getUserRecommendations() throws JSONException, IOException {
+        List<Video> list = new ArrayList<>();
+
+        list.addAll(list.size(), getVideos("movie", mContext.getResources().getString(R.string.trakt_api_url) + "/recommendations/movies?extended=full&limit=3"));
+        list.addAll(list.size(), getVideos("show", mContext.getResources().getString(R.string.trakt_api_url) + "/recommendations/shows?extended=full&limit=3"));
+        return list;
+    }
+
     public List<Video> getTrendingTVShows(int limit) throws JSONException, IOException {
 
         List<Video> list;
@@ -100,10 +108,13 @@ public class Chilly {
     public List<ListElem> getPublicList(String forElem) {
         List<ListElem> public_list = new ArrayList<>();
 
-        public_list.add(public_list.size(), new ListElem("Trending", "public-trending", forElem, "display-videos", ""));
+        public_list.add(public_list.size(), new ListElem("Trending now", "public-trending", forElem, "display-videos", ""));
         public_list.add(public_list.size(), new ListElem("Popular", "public-popular", forElem, "display-videos", ""));
-        public_list.add(public_list.size(), new ListElem("Most played", "public-played", forElem, "display-videos", ""));
-        public_list.add(public_list.size(), new ListElem("Box office", "public-boxoffice", forElem, "display-videos", ""));
+        public_list.add(public_list.size(), new ListElem("Mostly played", "public-played", forElem, "display-videos", ""));
+        public_list.add(public_list.size(), new ListElem("Mostly watched", "public-watched", forElem, "display-videos", ""));
+        if(forElem.equals("movie")) {
+            public_list.add(public_list.size(), new ListElem("Box Office", "public-boxoffice", forElem, "display-videos", ""));
+        }
 
         return public_list;
     }
@@ -152,6 +163,7 @@ public class Chilly {
 
         JSONArray data_list = getListFromTrakt(trakt_list_url);
         System.out.println(trakt_list_url);
+        System.out.println(data_list);
 
         for(int i = 0; i < data_list.length(); i++) {
 
@@ -162,10 +174,17 @@ public class Chilly {
             String background = "";
             String year = "";
 
+            String showTitle = "";
+            String seasonNumber = "";
+            String episodeNumber = "";
+
             switch (type) {
                 case "movie":
                     trakt_elem = data_list.optJSONObject(i).optJSONObject("movie");
-                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + trakt_elem.optJSONObject("ids").optString("tmdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);;
+                    if(trakt_elem == null) {
+                        trakt_elem = data_list.optJSONObject(i);
+                    }
+                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + trakt_elem.getJSONObject("ids").getString("tmdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);;
                     fanart_media = getDataFromFanart(fanart_url);
                     poster = getPoster(fanart_media, "movieposter", "", "");
                     background = getBackground(fanart_media, "moviebackground");
@@ -173,6 +192,9 @@ public class Chilly {
                     break;
                 case "show":
                     trakt_elem = data_list.optJSONObject(i).optJSONObject("show");
+                    if(trakt_elem == null) {
+                        trakt_elem = data_list.optJSONObject(i);
+                    }
                     fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + trakt_elem.optJSONObject("ids").optString("tvdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);;
                     fanart_media = getDataFromFanart(fanart_url);
                     poster = getPoster(fanart_media, "tvposter", "", "");
@@ -195,10 +217,12 @@ public class Chilly {
                     fanart_media = getDataFromFanart(fanart_url);
                     tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/tv/" + tvshow.tmdb_id + "/season/" + trakt_elem.optString("season") + "/episode/" + trakt_elem.optString("number") + "/images?language=en-US&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key);;
                     tmdb_media = getDataFromTMDB(tmdb_url);
-                    System.out.println(tmdb_url);
                     poster = mContext.getResources().getString(R.string.tmdb_image_url) + tmdb_media.optJSONArray("stills").optJSONObject(0).optString("file_path");
                     background = getBackground(fanart_media, "showbackground");
                     year = "S" + zeroAppended(trakt_elem.optString("season")) + "E" + zeroAppended(trakt_elem.optString("number"));
+                    showTitle = tvshow.title;
+                    seasonNumber = trakt_elem.getString("season");
+                    episodeNumber = trakt_elem.getString("number");
                     break;
             }
 
@@ -218,11 +242,14 @@ public class Chilly {
                     .description(trakt_elem.optString("overview"))
                     .cardImageUrl(poster)
                     .bgImageUrl(background)
+                    .videoUrl("")
                     .studio(network)
                     .videoType(type)
                     .productionYear(year)
                     .airedEpisodes(trakt_elem.optLong("aired_episodes"))
-                    .videoUrl("")
+                    .showTitle(showTitle)
+                    .seasonNumber(seasonNumber)
+                    .episodeNumber(episodeNumber)
                     .build();
 
 
@@ -257,10 +284,27 @@ public class Chilly {
 
         urlConnection.setRequestProperty("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version));
         urlConnection.setRequestProperty("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key));
+        String access_token = getAccessToken();
+        urlConnection.setRequestProperty("Authorization","Bearer " + access_token);
 
         list = new JSONArray(HTTPGrabber.getContentFromURL(urlConnection));
 
         return list;
+    }
+
+    private String getAccessToken() {
+        String token = "";
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        String token_string = sharedPreferences.getString("trakt_token", "NOTOKEN");
+
+        try {
+            JSONObject json_token = new JSONObject(token_string);
+            token = json_token.getString("access_token");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return token;
     }
 
     public JSONObject getCodeFromTrakt() throws JSONException, IOException {
