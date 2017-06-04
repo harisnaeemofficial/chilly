@@ -1,15 +1,6 @@
 package com.adisdurakovic.android.chilly.data;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.os.AsyncTask;
-import android.widget.Toast;
-
-import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.model.Video;
-import com.adisdurakovic.android.chilly.ui.PlaybackOverlayActivity;
-import com.adisdurakovic.android.chilly.ui.VideoDetailsActivity;
-import com.adisdurakovic.android.chilly.ui.VideoDetailsFragment;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,17 +20,17 @@ public class StreamGrabber {
         List<StreamProvider> stream_provider = new ArrayList<>();
 
         stream_provider.add(new Stream_123movieshd());
+        stream_provider.add(new Stream_miradetodo());
+        stream_provider.add(new Stream_dayt());
 
         for(Iterator<StreamProvider> i = stream_provider.iterator(); i.hasNext();) {
             StreamProvider provider = i.next();
-//            source_list.add(provider.getMovieStreamURL(video));
-//            source_list.addAll(provider.getMovieStreamURL(video));
-            for(Iterator<StreamProvider.StreamSource> j = provider.getStreamSources(video).iterator(); j.hasNext();) {
+            List<StreamProvider.StreamSource> streamSources = provider.getStreamSources(video);
+            if(streamSources.size() == 0) continue;
+            for(Iterator<StreamProvider.StreamSource> j = streamSources.iterator(); j.hasNext();) {
                 StreamProvider.StreamSource currentsource = j.next();
 
-                System.out.println(currentsource);
-
-                if(source_list.size() > 0 && Long.valueOf(currentsource.quality) > Long.valueOf(source_list.get(0).quality)) {
+                if(source_list.size() > 0 && currentsource.quality > source_list.get(0).quality) {
                     source_list.add(0, currentsource);
                 } else {
                     source_list.add(currentsource);

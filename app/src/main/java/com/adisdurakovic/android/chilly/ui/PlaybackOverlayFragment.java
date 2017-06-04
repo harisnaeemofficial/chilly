@@ -248,6 +248,11 @@ public class PlaybackOverlayFragment
     @Override
     public void onStreamGrab(String streamurl) {
 
+        if(streamurl.equals("")) {
+            Toast.makeText(getActivity().getApplicationContext(), "No stream found!", Toast.LENGTH_LONG).show();
+            getActivity().finish();
+        }
+
         mSelectedVideo.videoUrl = streamurl;
         stream_newurl = streamurl;
 
@@ -387,7 +392,7 @@ public class PlaybackOverlayFragment
 
     private void createMediaSession() {
         if (mSession == null) {
-            mSession = new MediaSessionCompat(getActivity(), "LeanbackSampleApp");
+            mSession = new MediaSessionCompat(getActivity(), "Chilly");
             mSession.setCallback(new MediaSessionCallback());
             mSession.setFlags(FLAG_HANDLES_MEDIA_BUTTONS | FLAG_HANDLES_TRANSPORT_CONTROLS);
             mSession.setActive(true);

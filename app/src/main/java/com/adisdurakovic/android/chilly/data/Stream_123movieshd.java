@@ -1,6 +1,7 @@
 package com.adisdurakovic.android.chilly.data;
 
 import android.graphics.Movie;
+import android.util.Log;
 
 import com.adisdurakovic.android.chilly.model.Video;
 
@@ -22,178 +23,106 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 /**
  * Created by add on 22/05/2017.
  */
 
 public class Stream_123movieshd extends StreamProvider {
 
+    String TAG = "123MHD";
 
 
     @Override
-    public List<StreamSource> getMovieSources(Video video) throws IOException {
+    public List<StreamSource> getStreamSources(Video video) {
+
+
         List<StreamSource> list = new ArrayList<>();
 
-        String videotitle = video.title.toLowerCase().replaceAll("[^a-z0-9A-Z ]", "").replace(" ", "-");
-        String search_url_movie = "https://123movieshd.tv/movie/search/" + videotitle;
-        String player_url = "";
+        String title = video.title;
 
-//        String search_title = movie.getTitle().replace(" ", "-").toLowerCase();
-
-//        String url = base_url + "/movie/search/" + search_title;
-
-        HttpURLConnection urlConnection_1 = (HttpURLConnection) new java.net.URL(search_url_movie).openConnection();
-        urlConnection_1.setRequestMethod("GET");
-
-        String movie_list = HTTPGrabber.getContentFromURL(urlConnection_1);
-        Document doc = Jsoup.parse(movie_list);
-        Element link_1 = doc.select("a.ml-mask").first();
-
-        if(link_1 != null) {
-            player_url = "https://123movieshd.tv" + link_1.attr("href") + "/watching.html";
+        if(video.videoType.equals("episode")) {
+            title = video.episodeShow.title + " season " + video.seasonNumber;
         }
-
-
-        HttpURLConnection urlConnection_2 = (HttpURLConnection) new java.net.URL(player_url).openConnection();
-        urlConnection_2.setRequestMethod("GET");
-
-        String player_info = HTTPGrabber.getContentFromURL(urlConnection_2);
-
-        Document doc2 = Jsoup.parse(player_info);
-        Element link_2 = doc2.select("div.les-content a").first();
-
-        String link_url = "";
-
-        if(link_2 != null) {
-            link_url = link_2.attr("player-data");
-        }
-
-
-
-        HttpURLConnection urlConnection_3 = (HttpURLConnection) new java.net.URL(link_url).openConnection();
-        urlConnection_3.setRequestMethod("GET");
-
-        String stream_detail = HTTPGrabber.getContentFromURL(urlConnection_3);
-
-
-        Pattern pattern = Pattern.compile("sources:.*?file.*?[\\]]");
-//        Pattern pattern = Pattern.compile("(https:.*?redirector.*?)[\\'\\\"]");
-        Matcher matcher = pattern.matcher(stream_detail);
-
-
-        while(matcher.find()) {
-            String jsonString = "{" + matcher.group().replace("sources:", "'sources':").replace("file:", "'file':").replace("label:", "'label':") + "}";
-            try {
-                JSONObject source_object = new JSONObject(jsonString);
-                JSONArray sources = source_object.getJSONArray("sources");
-
-                for(int i = 0; i < sources.length(); i++) {
-                    JSONObject source = sources.getJSONObject(i);
-                    StreamSource ss = new StreamSource();
-                    ss.quality = source.optString("label").replace(" P", "");
-                    ss.url = source.getString("file");
-                    ss.provider = "123MOVIESHD";
-                    ss.videosource = "GVIDEO";
-                    if(!ss.quality.equals("Auto")) {
-                        list.add(ss);
-                    }
-                }
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return list;
-    }
-
-    @Override
-    public List<StreamSource> getEpisodeSources(Video video) throws IOException {
-        List<StreamSource> list = new ArrayList<>();
-
-        String title = video.showTitle + " season " + video.seasonNumber;
 
         String videotitle = title.toLowerCase().replaceAll("[^a-z0-9A-Z ]", "").replace(" ", "-");
-        String search_url_movie = "https://123movieshd.tv/movie/search/" + videotitle;
-        String player_url = "";
+        String search_url = "https://123movieshd.tv/movie/search/" + videotitle;
 
-//        String search_title = movie.getTitle().replace(" ", "-").toLowerCase();
+        Log.d(TAG, "search_url: " + search_url);
 
-//        String url = base_url + "/movie/search/" + search_title;
-
-        HttpURLConnection urlConnection_1 = (HttpURLConnection) new java.net.URL(search_url_movie).openConnection();
-        urlConnection_1.setRequestMethod("GET");
-
-        String movie_list = HTTPGrabber.getContentFromURL(urlConnection_1);
-        Document doc = Jsoup.parse(movie_list);
-        Element link_1 = doc.select("a.ml-mask").last();
-
-        if(link_1 != null) {
-            player_url = "https://123movieshd.tv" + link_1.attr("href") + "/watching.html";
-        }
+        request = new Request.Builder().url(search_url).build();
 
 
-        HttpURLConnection urlConnection_2 = (HttpURLConnection) new java.net.URL(player_url).openConnection();
-        urlConnection_2.setRequestMethod("GET");
-
-        String player_info = HTTPGrabber.getContentFromURL(urlConnection_2);
-
-        Document doc2 = Jsoup.parse(player_info);
-        Elements episode_links = doc2.select("div.les-content a");
-
-        Element link_2 = null;
-
-        for(Element episode_link : episode_links) {
-            if(episode_link.attr("episode-data").equals(video.episodeNumber)) {
-                link_2 = episode_link;
-                break;
-            }
-        }
-
-        String link_url = "";
-
-        if(link_2 != null) {
-            link_url = link_2.attr("player-data");
-        }
-
-        System.out.println(link_url);
-
-        HttpURLConnection urlConnection_3 = (HttpURLConnection) new java.net.URL(link_url).openConnection();
-        urlConnection_3.setRequestMethod("GET");
-
-        String stream_detail = HTTPGrabber.getContentFromURL(urlConnection_3);
+        try {
 
 
-        Pattern pattern = Pattern.compile("sources:.*?file.*?[\\]]");
-//        Pattern pattern = Pattern.compile("(https:.*?redirector.*?)[\\'\\\"]");
-        Matcher matcher = pattern.matcher(stream_detail);
+            String movie_list = client.newCall(request).execute().body().string();
 
 
-        while(matcher.find()) {
-            String jsonString = "{" + matcher.group().replace("sources:", "'sources':").replace("file:", "'file':").replace("label:", "'label':") + "}";
-            try {
-                JSONObject source_object = new JSONObject(jsonString);
-                JSONArray sources = source_object.getJSONArray("sources");
+            Document doc = Jsoup.parse(movie_list);
+            Element link_1 = doc.select("a.ml-mask").first();
 
-                for(int i = 0; i < sources.length(); i++) {
-                    JSONObject source = sources.getJSONObject(i);
+            if(link_1 == null) return list;
+
+            String player_url = "https://123movieshd.tv" + link_1.attr("href") + "/watching.html";
+            Log.d(TAG, "player_url: " + player_url);
+
+            request = new Request.Builder().url(player_url).build();
+
+            String player_info = client.newCall(request).execute().body().string();
+
+            Document doc2 = Jsoup.parse(player_info);
+            Elements link_2_elems = doc2.select("div.les-content a");
+
+            for(Element link_2_elem : link_2_elems) {
+
+                if(video.videoType.equals("episode") && !link_2_elem.attr("episode-data").equals(video.episodeNumber)) continue;
+
+                String link_2_url = link_2_elem.attr("player-data");
+
+                Log.d(TAG, "link: " + link_2_url);
+
+                request = new Request.Builder().url(link_2_url).build();
+
+                String stream_detail = client.newCall(request).execute().body().string();
+
+
+//                Pattern pattern = Pattern.compile("sources:.*?file.*?[\\]]");
+                Pattern pattern = Pattern.compile("(https:.*?redirector.*?)[\\'\\\"]");
+                Matcher matcher = pattern.matcher(stream_detail);
+
+
+                while(matcher.find()) {
+
+                    String src_url = matcher.group();
+
                     StreamSource ss = new StreamSource();
-                    ss.quality = source.optString("label").replace(" P", "");
-                    ss.url = source.getString("file");
-                    ss.provider = "123MOVIESHD";
+                    ss.quality = getQualityFromGoogleURL(src_url);
+                    ss.url = src_url;
+                    Log.d(TAG, "source: " + src_url);
+                    ss.provider = TAG;
                     ss.videosource = "GVIDEO";
-                    if(!ss.quality.equals("Auto")) {
-                        list.add(ss);
-                    }
+
                 }
 
-            } catch (JSONException e) {
-                e.printStackTrace();
+
             }
+
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+
+
 
         return list;
     }
+
 
 
 }

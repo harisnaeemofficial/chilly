@@ -174,7 +174,6 @@ public class Chilly {
             String background = "";
             String year = "";
 
-            String showTitle = "";
             String seasonNumber = "";
             String episodeNumber = "";
 
@@ -220,7 +219,6 @@ public class Chilly {
                     poster = mContext.getResources().getString(R.string.tmdb_image_url) + tmdb_media.optJSONArray("stills").optJSONObject(0).optString("file_path");
                     background = getBackground(fanart_media, "showbackground");
                     year = "S" + zeroAppended(trakt_elem.optString("season")) + "E" + zeroAppended(trakt_elem.optString("number"));
-                    showTitle = tvshow.title;
                     seasonNumber = trakt_elem.getString("season");
                     episodeNumber = trakt_elem.getString("number");
                     break;
@@ -247,9 +245,9 @@ public class Chilly {
                     .videoType(type)
                     .productionYear(year)
                     .airedEpisodes(trakt_elem.optLong("aired_episodes"))
-                    .showTitle(showTitle)
                     .seasonNumber(seasonNumber)
                     .episodeNumber(episodeNumber)
+                    .episodeShow(tvshow)
                     .build();
 
 

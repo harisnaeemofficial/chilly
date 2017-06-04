@@ -41,9 +41,9 @@ public final class Video implements Parcelable {
     public final String productionYear;
     public final String videoType;
     public long airedEpisodes;
-    public final String showTitle;
     public final String seasonNumber;
     public final String episodeNumber;
+    public final Video episodeShow;
 
 
     private Video(
@@ -60,9 +60,9 @@ public final class Video implements Parcelable {
             final String productionYear,
             final String videoType,
             final long airedEpisodes,
-            final String showTitle,
             final String seasonNumber,
-            final String episodeNumber
+            final String episodeNumber,
+            final Video episodeShow
             ) {
         this.id = id;
         this.tvdb_id = tvdb_id;
@@ -77,9 +77,9 @@ public final class Video implements Parcelable {
         this.productionYear = productionYear;
         this.videoType = videoType;
         this.airedEpisodes = airedEpisodes;
-        this.showTitle = showTitle;
         this.seasonNumber = seasonNumber;
         this.episodeNumber = episodeNumber;
+        this.episodeShow = episodeShow;
     }
 
     protected Video(Parcel in) {
@@ -96,9 +96,9 @@ public final class Video implements Parcelable {
         productionYear = in.readString();
         videoType = in.readString();
         airedEpisodes = in.readLong();
-        showTitle = in.readString();
         seasonNumber = in.readString();
         episodeNumber = in.readString();
+        episodeShow = in.readParcelable(Video.class.getClassLoader());
     }
 
     public static final Creator<Video> CREATOR = new Creator<Video>() {
@@ -137,13 +137,19 @@ public final class Video implements Parcelable {
         dest.writeString(productionYear);
         dest.writeString(videoType);
         dest.writeLong(airedEpisodes);
-        dest.writeString(showTitle);
         dest.writeString(seasonNumber);
         dest.writeString(episodeNumber);
+        dest.writeParcelable(episodeShow, flags);
     }
 
     @Override
     public String toString() {
+
+        String es = "";
+        if(episodeShow != null) {
+            es = episodeShow.toString();
+        }
+
         String s = "Video{";
         s += "id=" + id;
         s += ", tvdb_id='" + tvdb_id + "'";
@@ -158,9 +164,9 @@ public final class Video implements Parcelable {
         s += ", productionYear='" + productionYear + "'";
         s += ", videoType='" + videoType + "'";
         s += ", airedEpisodes='" + airedEpisodes + "'";
-        s += ", showTitle='" + showTitle + "'";
         s += ", seasonNumber='" + seasonNumber + "'";
         s += ", episodeNumber='" + episodeNumber + "'";
+        s += ", episodeShow='" + es + "'";
         s += "}";
         return s;
     }
@@ -180,9 +186,9 @@ public final class Video implements Parcelable {
         private String productionYear;
         private String videoType;
         public long airedEpisodes;
-        private String showTitle;
         private String seasonNumber;
         private String episodeNumber;
+        private Video episodeShow;
 
 
         public VideoBuilder id(long id) {
@@ -251,11 +257,6 @@ public final class Video implements Parcelable {
             return this;
         }
 
-        public VideoBuilder showTitle(String showTitle) {
-            this.showTitle = showTitle;
-            return this;
-        }
-
         public VideoBuilder seasonNumber(String seasonNumber) {
             this.seasonNumber = seasonNumber;
             return this;
@@ -263,6 +264,11 @@ public final class Video implements Parcelable {
 
         public VideoBuilder episodeNumber(String episodeNumber) {
             this.episodeNumber = episodeNumber;
+            return this;
+        }
+
+        public VideoBuilder episodeShow(Video episodeShow) {
+            this.episodeShow = episodeShow;
             return this;
         }
 
@@ -284,7 +290,7 @@ public final class Video implements Parcelable {
                     0,
                     "",
                     "",
-                    ""
+                    null
             );
         }
 
@@ -303,9 +309,9 @@ public final class Video implements Parcelable {
                     productionYear,
                     videoType,
                     airedEpisodes,
-                    showTitle,
                     seasonNumber,
-                    episodeNumber
+                    episodeNumber,
+                    episodeShow
             );
         }
     }

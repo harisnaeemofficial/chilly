@@ -278,9 +278,7 @@ class RequestTokenTask extends AsyncTask<String, String, String> {
 
     }
 
-    // After completing background task Dismiss the progress dialog
     protected void onPostExecute(String somestring) {
-        // dismiss the dialog once done
         try {
             if(tokenResponse.getString("access_token") != null) {
                 delegate.onReceiveToken(tokenResponse);
@@ -337,9 +335,7 @@ class RequestUserTask extends AsyncTask<String, String, String> {
 
     }
 
-    // After completing background task Dismiss the progress dialog
     protected void onPostExecute(String somestring) {
-        // dismiss the dialog once done
         try {
             delegate.onReceiveUser(userResponse);
         } catch (Exception e) {
