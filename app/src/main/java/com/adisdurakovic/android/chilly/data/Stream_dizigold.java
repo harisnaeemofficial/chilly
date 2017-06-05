@@ -1,5 +1,7 @@
 package com.adisdurakovic.android.chilly.data;
 
+import android.util.Log;
+
 import com.adisdurakovic.android.chilly.model.Video;
 
 import org.json.JSONArray;
@@ -31,6 +33,9 @@ import okhttp3.Response;
 public class Stream_dizigold extends StreamProvider {
 
 
+    String TAG = "DIZIGOLD";
+
+
     @Override
     public List<StreamSource> getStreamSources(Video video) throws IOException {
 
@@ -40,12 +45,14 @@ public class Stream_dizigold extends StreamProvider {
         String title = video.episodeShow.title;
 
         String videotitle = title.toLowerCase().replaceAll("[^a-z0-9A-Z ]", "").replace(" ", "-");
-        String search_url_episode = "http://www.dizigold.org/" + videotitle + "/" + video.seasonNumber + "-sezon/" + video.episodeNumber + "-bolum";
+
+        String base_url = "http://www.dizigold1.com";
+        String search_url_episode = base_url + "/" + videotitle + "/" + video.seasonNumber + "-sezon/" + video.episodeNumber + "-bolum";
 
 //        String search_title = movie.getTitle().replace(" ", "-").toLowerCase();
 
 //        String url = base_url + "/movie/search/" + search_title;
-        System.out.println(search_url_episode);
+        Log.d(TAG, "search_url: " + search_url_episode);
         request = new Request.Builder().url(search_url_episode).build();
 
         Pattern pattern = Pattern.compile("var view_id=\"([0-9]*)\"");
@@ -59,81 +66,20 @@ public class Stream_dizigold extends StreamProvider {
             if(!view_id.equals("")) break;
         }
 
-        String player_url = "http://player.dizigold.org/?id=" + view_id + "&s=1&dil=or";
 
-        request = new Request.Builder().url(player_url).build();
+        String player_url = "http://player.dizigold1.com/?id=" + view_id + "&s=1&dil=tr";
+        Log.d(TAG, "player_url: " + player_url);
 
+        request = new Request.Builder()
+                .url(player_url)
+                .addHeader("Referer", base_url)
+                .build();
 
-//        HttpURLConnection urlConnection_1 = (HttpURLConnection) new java.net.URL(search_url_episode).openConnection();
-//        urlConnection_1.setRequestMethod("GET");
-//
-//        String movie_list = HTTPGrabber.getContentFromURL(urlConnection_1);
-//        Document doc = Jsoup.parse(movie_list);
-//        Element link_1 = doc.select("a.ml-mask").last();
-//
-//        if(link_1 != null) {
-//            player_url = "https://123movieshd.tv" + link_1.attr("href") + "/watching.html";
-//        }
-//
-//
-//        HttpURLConnection urlConnection_2 = (HttpURLConnection) new java.net.URL(player_url).openConnection();
-//        urlConnection_2.setRequestMethod("GET");
-//
-//        String player_info = HTTPGrabber.getContentFromURL(urlConnection_2);
-//
-//        Document doc2 = Jsoup.parse(player_info);
-//        Elements episode_links = doc2.select("div.les-content a");
-//
-//        Element link_2 = null;
-//
-//        for(Element episode_link : episode_links) {
-//            if(episode_link.attr("episode-data").equals(video.episodeNumber)) {
-//                link_2 = episode_link;
-//                break;
-//            }
-//        }
-//
-//        String link_url = "";
-//
-//        if(link_2 != null) {
-//            link_url = link_2.attr("player-data");
-//        }
-//
-//        System.out.println(link_url);
-//
-//        HttpURLConnection urlConnection_3 = (HttpURLConnection) new java.net.URL(link_url).openConnection();
-//        urlConnection_3.setRequestMethod("GET");
-//
-//        String stream_detail = HTTPGrabber.getContentFromURL(urlConnection_3);
-
-
-//        Pattern pattern = Pattern.compile("sources:.*?file.*?[\\]]");
-////        Pattern pattern = Pattern.compile("(https:.*?redirector.*?)[\\'\\\"]");
-//        Matcher matcher = pattern.matcher(stream_detail);
-//
-//
-//        while(matcher.find()) {
-//            String jsonString = "{" + matcher.group().replace("sources:", "'sources':").replace("file:", "'file':").replace("label:", "'label':") + "}";
-//            try {
-//                JSONObject source_object = new JSONObject(jsonString);
-//                JSONArray sources = source_object.getJSONArray("sources");
-//
-//                for(int i = 0; i < sources.length(); i++) {
-//                    JSONObject source = sources.getJSONObject(i);
-//                    StreamSource ss = new StreamSource();
-//                    ss.quality = source.optString("label").replace(" P", "");
-//                    ss.url = source.getString("file");
-//                    ss.provider = "123MOVIESHD";
-//                    ss.videosource = "GVIDEO";
-//                    if(!ss.quality.equals("Auto")) {
-//                        list.add(ss);
-//                    }
-//                }
-//
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//        }
+        String respbody = client.newCall(request).execute().body().string();
+        Elements iframes = Jsoup.parse(respbody).select("iframe");
+        for(Element iframe : iframes) {
+            Log.d(TAG, "iframe_url: " + iframe.attr("src"));
+        }
 
         return list;
     }
