@@ -31,6 +31,8 @@ public class Stream_sezonlukdizi extends StreamProvider {
     @Override
     public List<StreamSource> getStreamSources(Video video) {
 
+        List<StreamSource> list = new ArrayList<>();
+        if(!video.videoType.equals("episode")) return list;
 
         String videotitle = video.episodeShow.title.toLowerCase().replaceAll("[^a-z0-9A-Z ]", "").replace(" ", "-");
         String base_link = "http://sezonlukdizi.net";
@@ -39,7 +41,7 @@ public class Stream_sezonlukdizi extends StreamProvider {
 
         Log.d(TAG, "url: " + url);
 
-        List<StreamSource> list = new ArrayList<>();
+
 
         request = new Request.Builder().url(url).build();
 
