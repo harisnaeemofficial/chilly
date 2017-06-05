@@ -22,6 +22,7 @@ public class StreamGrabber {
         stream_provider.add(new Stream_123movieshd());
         stream_provider.add(new Stream_miradetodo());
         stream_provider.add(new Stream_dayt());
+        stream_provider.add(new Stream_sezonlukdizi());
 
         for(Iterator<StreamProvider> i = stream_provider.iterator(); i.hasNext();) {
             StreamProvider provider = i.next();

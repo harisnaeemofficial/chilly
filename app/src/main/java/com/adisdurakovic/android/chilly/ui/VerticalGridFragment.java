@@ -17,11 +17,13 @@
 package com.adisdurakovic.android.chilly.ui;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -38,7 +40,12 @@ import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.support.v17.leanback.widget.VerticalGridPresenter;
 import android.support.v4.app.ActivityOptionsCompat;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.R;
@@ -67,11 +74,16 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
     private ArrayObjectAdapter mEpisodeadapter;
     private Video mSelectedShow;
     private Video mSelectedSeason;
+    private SpinnerFragment mSpinnerFragment;
     ListElem elem;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mSpinnerFragment = new SpinnerFragment();
+        getFragmentManager().beginTransaction().add(R.id.vertical_grid_fragment, mSpinnerFragment).commit();
 
 //        mVideoCursorAdapter.setMapper(new VideoCursorMapper());
 
@@ -115,9 +127,13 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         setupFragment();
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
+    }
+
     private void setupFragment() {
-
-
 
         new VideoLoaderTask(getActivity().getApplicationContext(), this, elem).execute();
 
@@ -144,6 +160,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
     @Override
     public void onGrabVideos(List<Video> video_list) {
         mEpisodeadapter.addAll(mEpisodeadapter.size(), video_list);
+        getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
     }
 
 
@@ -173,6 +190,25 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
                 RowPresenter.ViewHolder rowViewHolder, Row row) {
         }
     }
+
+
+    public static class SpinnerFragment extends Fragment {
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            ProgressBar progressBar = new ProgressBar(container.getContext());
+            if (container instanceof FrameLayout) {
+                Resources res = getResources();
+                int width = res.getDimensionPixelSize(R.dimen.spinner_width);
+                int height = res.getDimensionPixelSize(R.dimen.spinner_height);
+                FrameLayout.LayoutParams layoutParams =
+                        new FrameLayout.LayoutParams(width, height, Gravity.CENTER);
+                progressBar.setLayoutParams(layoutParams);
+            }
+            return progressBar;
+        }
+    }
+
 }
 
 interface VideoLoaderResponse {
