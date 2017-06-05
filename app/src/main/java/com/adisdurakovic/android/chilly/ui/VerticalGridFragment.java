@@ -130,7 +130,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
     @Override
     public void onStop() {
         super.onStop();
-        getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
+//        getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
     }
 
     private void setupFragment() {
