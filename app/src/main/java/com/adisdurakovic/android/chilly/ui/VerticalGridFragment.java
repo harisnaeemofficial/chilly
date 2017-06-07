@@ -221,12 +221,12 @@ class VideoLoaderTask extends AsyncTask<String, String, String> {
     VideoLoaderResponse delegate = null;
     List<Video> video_list;
     private ListElem elem;
-    Chilly chilly;
+    Context ctx;
 
 
     public VideoLoaderTask(Context ctx, VideoLoaderResponse del, ListElem elem) {
         this.delegate = del;
-        this.chilly = new Chilly(ctx);
+        this.ctx = ctx;
         this.video_list = new ArrayList<>();
         this.elem = elem;
     }
@@ -245,18 +245,18 @@ class VideoLoaderTask extends AsyncTask<String, String, String> {
         try {
 
             if(elem.tvshow != null && elem.season != null) {
-                video_list = chilly.getEpisodesForShowSeason(elem.tvshow, elem.season);
+                video_list = Chilly.getInstance(ctx).getEpisodesForShowSeason(elem.tvshow, elem.season);
             } else {
                 if(elem.slug.contains("public")) {
-                    video_list = chilly.getPublicVideos(elem.slug.replace("public-", ""), elem.videoType, 40);
+                    video_list = Chilly.getInstance(ctx).getPublicVideos(elem.slug.replace("public-", ""), elem.videoType, 40);
                 }
 
                 if(elem.slug.contains("user")) {
-                    video_list = chilly.getUserVideos(elem.slug.replace("user-", ""), elem.videoType);
+                    video_list = Chilly.getInstance(ctx).getUserVideos(elem.slug.replace("user-", ""), elem.videoType);
                 }
 
                 if(!elem.filterType.equals("")) {
-                    video_list = chilly.getByFilter(elem, 40);
+                    video_list = Chilly.getInstance(ctx).getByFilter(elem, 40);
                 }
             }
 

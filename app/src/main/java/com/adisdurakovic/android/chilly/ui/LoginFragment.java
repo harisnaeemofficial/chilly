@@ -26,12 +26,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v17.leanback.app.ErrorFragment;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.data.Chilly;
@@ -48,6 +50,7 @@ import java.util.List;
  */
 public class LoginFragment extends ErrorFragment implements RequestCodeResponse, RequestTokenResponse, RequestUserResponse {
     private static final boolean TRANSLUCENT = true;
+    private final String TAG = "LOGIN";
 
     private final Handler mHandler = new Handler();
     private SpinnerFragment mSpinnerFragment;
@@ -60,18 +63,47 @@ public class LoginFragment extends ErrorFragment implements RequestCodeResponse,
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle(getResources().getString(R.string.app_name));
+        setTitle(getResources().getString(R.string.login) + "TRAKT");
 
         mSpinnerFragment = new SpinnerFragment();
-        getFragmentManager().beginTransaction().add(R.id.main_frame, mSpinnerFragment).commit();
+//        getFragmentManager().beginTransaction().add(R.id.main_frame, mSpinnerFragment).commit();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+//        mHandler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
+//                setErrorContent();
+//            }
+//        }, TIMER_DELAY);
+        new RequestCodeTask(getActivity().getApplicationContext(), this).execute();
+
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        mHandler.removeCallbacksAndMessages(null);
+//        getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
     }
 
     @Override
     public void onReceiveCode(final JSONObject loginResponse) {
-        System.out.println(loginResponse);
-        getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
 
-        setImageDrawable(getResources().getDrawable(R.drawable.lb_ic_sad_cloud, null));
+        Log.d(TAG, "loginResponse: " + loginResponse);
+//        if(loginResponse == null) return;
+
+//        getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
+
+        setImageDrawable(getResources().getDrawable(R.drawable.logo_trakt, null));
+        try {
+            setMessage("Please visit " + loginResponse.getString("verification_url") + " and enter the following code: " + loginResponse.getString("user_code"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 //            setMessage(loginResponse.getString("user_code"));
             final RequestTokenResponse me = this;
@@ -92,8 +124,6 @@ public class LoginFragment extends ErrorFragment implements RequestCodeResponse,
 
 
 
-
-
         setDefaultBackground(TRANSLUCENT);
 
         setButtonText(getResources().getString(R.string.dismiss_error));
@@ -111,63 +141,32 @@ public class LoginFragment extends ErrorFragment implements RequestCodeResponse,
     @Override
     public void onReceiveToken(JSONObject tokenResponse) {
 
+//        if(tokenResponse == null) return;
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("trakt_token", tokenResponse.toString());
-
-        if(editor.commit()) {
-            System.out.println("COMMIT SUCCESS");
-            System.out.println(tokenResponse);
+        if(tokenResponse != null && Chilly.getInstance(getActivity().getApplicationContext()).saveSettings("trakt_token", tokenResponse.toString())) {
+            Log.d(TAG, "tokenResponse: " + tokenResponse);
             hasToken = true;
             try {
                 new RequestUserTask(getActivity().getApplicationContext(), this, tokenResponse.getString("access_token")).execute();
             } catch (JSONException e) {
 
             }
-        } else {
-            System.out.println("ERROR on COMMIT");
         }
 
     }
 
     @Override
     public void onReceiveUser(JSONObject userResponse) {
-
-        System.out.println(userResponse);
-
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("trakt_user", userResponse.toString());
-        editor.commit();
-
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-//        mHandler.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
-//                setErrorContent();
-//            }
-//        }, TIMER_DELAY);
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-        String string_token = sharedPreferences.getString("trakt_token", "NOTOKEN");
-
-        if(string_token.equals("")) {
-            new RequestCodeTask(getActivity().getApplicationContext(), this).execute();
-        }
+        Log.d(TAG, "userResponse: " + userResponse);
+//        if(userResponse == null) return;
+        Chilly.getInstance(getActivity().getApplicationContext()).saveSettings("trakt_user", userResponse.toString());
+        getFragmentManager().beginTransaction().remove(LoginFragment.this).commit();
+        getFragmentManager().popBackStack();
+        Toast.makeText(getActivity().getApplicationContext(), "Login successfull", Toast.LENGTH_LONG).show();
 
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        mHandler.removeCallbacksAndMessages(null);
-        getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
-    }
+
 
 
     public static class SpinnerFragment extends Fragment {
@@ -214,15 +213,9 @@ class RequestCodeTask extends AsyncTask<String, String, String> {
     // Checking login in background
     protected String doInBackground(String... params) {
 
+        loginResponse = Chilly.getInstance(ctx).getCodeFromTrakt();
 
-        Chilly chilly = new Chilly(ctx);
-        try {
-            loginResponse = chilly.getCodeFromTrakt();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return loginResponse.toString();
-
+        return "";
     }
 
     // After completing background task Dismiss the progress dialog
@@ -261,32 +254,13 @@ class RequestTokenTask extends AsyncTask<String, String, String> {
     // Checking login in background
     protected String doInBackground(String... params) {
 
-        final Chilly chilly = new Chilly(ctx);
-
-
-
-        try {
-            tokenResponse = chilly.getTokenFromTrakt(code);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-
-
-        return tokenResponse.toString();
+        tokenResponse = Chilly.getInstance(ctx).getTokenFromTrakt(code);
+        return "";
 
     }
 
     protected void onPostExecute(String somestring) {
-        try {
-            if(tokenResponse.getString("access_token") != null) {
-                delegate.onReceiveToken(tokenResponse);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        delegate.onReceiveToken(tokenResponse);
     }
 }
 
@@ -318,29 +292,12 @@ class RequestUserTask extends AsyncTask<String, String, String> {
     // Checking login in background
     protected String doInBackground(String... params) {
 
-        final Chilly chilly = new Chilly(ctx);
-
-
-
-        try {
-            userResponse = chilly.getUserFromTrakt(code);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-
-
-        return userResponse.toString();
+        userResponse = Chilly.getInstance(ctx).getUserFromTrakt(code);
+        return "";
 
     }
 
     protected void onPostExecute(String somestring) {
-        try {
-            delegate.onReceiveUser(userResponse);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        delegate.onReceiveUser(userResponse);
     }
 }

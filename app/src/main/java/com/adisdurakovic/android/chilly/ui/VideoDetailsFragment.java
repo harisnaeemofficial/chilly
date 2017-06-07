@@ -60,6 +60,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.data.Chilly;
+import com.adisdurakovic.android.chilly.data.ListElem;
 import com.adisdurakovic.android.chilly.data.StreamGrabber;
 import com.adisdurakovic.android.chilly.data.Stream_123movieshd;
 import com.bumptech.glide.Glide;
@@ -89,6 +90,7 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
     private static final int ACTION_PLAY_NOW = 1;
     private static final int ACTION_PLAY_FROM = 2;
     private static final int ACTION_PLAY_TRAILER = 3;
+    private static final int ACTION_TRAKT = 4;
 
     // ID for loader that loads related videos.
     private static final int RELATED_VIDEO_LOADER = 1;
@@ -221,6 +223,11 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
                     intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
                     startActivity(intent);
 //                    new StreamTask(mFragment, mSelectedVideo).execute();
+                } else if (action.getId() == ACTION_TRAKT) {
+                    Intent intent = new Intent(getActivity(), ListSelectActivity.class);
+                    intent.putExtra("listElem", new ListElem("Trakt", "trakt-actions", "", "", ""));
+                    Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity()).toBundle();
+                    startActivity(intent, bundle);
                 } else {
                     Toast.makeText(getActivity(), action.toString(), Toast.LENGTH_SHORT).show();
                 }
@@ -370,6 +377,9 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
                 .getString(R.string.play_now)));
         adapter.set(ACTION_PLAY_FROM, new Action(ACTION_PLAY_FROM, getResources().getString(R.string.play_from)));
         adapter.set(ACTION_PLAY_TRAILER, new Action(ACTION_PLAY_TRAILER, getResources().getString(R.string.play_trailer)));
+        if(Chilly.getInstance(getActivity().getApplicationContext()).userLoggedIn()){
+            adapter.set(ACTION_TRAKT, new Action(ACTION_TRAKT, "TRAKT"));
+        }
         row.setActionsAdapter(adapter);
 
         mAdapter.add(row);
@@ -471,7 +481,7 @@ class SeasonTask extends AsyncTask<String, String, String> {
 
     private final Video mSelectedVideo;
     ArrayObjectAdapter show_seasons;
-    Chilly chilly;
+    Context ctx;
 
     SeasonResponse delegate;
 
@@ -479,7 +489,7 @@ class SeasonTask extends AsyncTask<String, String, String> {
 
     public SeasonTask(Context ctx, SeasonResponse del, Video video) {
         this.mSelectedVideo = video;
-        chilly = new Chilly(ctx);
+        this.ctx = ctx;
         this.delegate = del;
     }
 
@@ -493,7 +503,7 @@ class SeasonTask extends AsyncTask<String, String, String> {
     protected String doInBackground(String... params) {
 
         try {
-            video_list = chilly.getSeasonsForShow(mSelectedVideo);
+            video_list = Chilly.getInstance(ctx).getSeasonsForShow(mSelectedVideo);
 
         } catch (Exception e) {
             e.printStackTrace();

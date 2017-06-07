@@ -39,20 +39,27 @@ public class Stream_sezonlukdizi extends StreamProvider {
         String url = base_link + "/" + videotitle + "/" + video.seasonNumber + "-sezon-" + video.episodeNumber + "-bolum.html";
         String video_url = base_link + "/ajax/dataEmbed.asp";
 
-        Log.d(TAG, "url: " + url);
-
-
-
-        request = new Request.Builder().url(url).build();
 
 
         try {
 
+            Elements id_elems = null;
 
+            for(int i = 1; i <= 3; i++) {
+                request = new Request.Builder()
+                        .url(url)
+                        .addHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
+                        .build();
+                response = client.newCall(request).execute();
+                String res = response.body().string();
+                Log.d(TAG, "res: " + res);
+                Document doc = Jsoup.parse(res);
+                Log.d(TAG, "try " + i + ": " + response.request().url());
 
-            Document doc = Jsoup.parse(client.newCall(request).execute().body().string());
+                id_elems = doc.select("div.mediv[data-id]");
+                if(id_elems.size() > 0) break;
+            }
 
-            Elements id_elems = doc.select("div.menu div[data-id]");
 
             if(id_elems == null) return list;
 

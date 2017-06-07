@@ -166,12 +166,12 @@ class ListTask extends AsyncTask<String, String, String> {
     ListElem item;
     ListResponse delegate;
     List<ListElem> list = new ArrayList<ListElem>();
-    Chilly chilly;
+    Context ctx;
 
-    public ListTask(Context context, ListResponse del, ListElem item) {
+    public ListTask(Context ctx, ListResponse del, ListElem item) {
         this.item = item;
         this.delegate = del;
-        chilly = new Chilly(context);
+        this.ctx = ctx;
     }
 
     // Before starting background thread Show Progress Dialog
@@ -188,11 +188,13 @@ class ListTask extends AsyncTask<String, String, String> {
         try {
             switch(item.slug) {
                 case "genres":
-                    list = chilly.getGenres(item.videoType);
+                    list = Chilly.getInstance(ctx).getGenres(item.videoType);
                     break;
                 case "trakt-public-list":
-                    list = chilly.getPublicList(item.videoType);
+                    list = Chilly.getInstance(ctx).getPublicList(item.videoType);
                     break;
+                case "trakt-actions":
+                    list = Chilly.getInstance(ctx).getTraktActions(item.videoType);
             }
 
         } catch (Exception e) {

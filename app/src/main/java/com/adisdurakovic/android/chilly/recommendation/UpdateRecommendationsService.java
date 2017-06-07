@@ -72,12 +72,11 @@ public class UpdateRecommendationsService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        Chilly chilly = new Chilly(getApplicationContext());
 
         List<Video> recommendations = new ArrayList<>();
 
         try {
-            recommendations = chilly.getUserRecommendations();
+            recommendations = Chilly.getInstance(getApplicationContext()).getUserRecommendations();
         } catch (Exception e) {
 
         }

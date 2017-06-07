@@ -20,7 +20,16 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okio.BufferedSink;
 
 import static android.os.Environment.isExternalStorageRemovable;
 
@@ -29,13 +38,20 @@ import static android.os.Environment.isExternalStorageRemovable;
  */
 
 public class Chilly {
-
+    private static Chilly mInstance;
     private Context mContext;
     private Video tvshow;
     private Video season;
 
-    public Chilly(Context ctx) {
+    private Chilly(Context ctx) {
         mContext = ctx;
+    }
+
+    public static synchronized Chilly getInstance(Context context) {
+        if (mInstance == null) {
+            mInstance = new Chilly(context);
+        }
+        return mInstance;
     }
 
     public List<Video> getTrendingMovies(int limit) throws JSONException, IOException {
@@ -117,6 +133,16 @@ public class Chilly {
         }
 
         return public_list;
+    }
+
+    public List<ListElem> getTraktActions(String forElem) {
+        List<ListElem> trakt_actions = new ArrayList<>();
+
+        trakt_actions.add(trakt_actions.size(), new ListElem("Add to Collection", "trakt-add-collection", forElem, "trakt-api", ""));
+        trakt_actions.add(trakt_actions.size(), new ListElem("Add to Watchlist", "trakt-add-watchlist", forElem, "trakt-api", ""));
+        trakt_actions.add(trakt_actions.size(), new ListElem("Mark as watched", "trakt-mark-watched", forElem, "trakt-api", ""));
+
+        return trakt_actions;
     }
 
     private String getUserSlug() {
@@ -293,8 +319,8 @@ public class Chilly {
     private String getAccessToken() {
         String token = "";
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-        String token_string = sharedPreferences.getString("trakt_token", "NOTOKEN");
-
+        String token_string = sharedPreferences.getString("trakt_token", "");
+        if(token_string.equals("")) return "";
         try {
             JSONObject json_token = new JSONObject(token_string);
             token = json_token.getString("access_token");
@@ -305,59 +331,105 @@ public class Chilly {
         return token;
     }
 
-    public JSONObject getCodeFromTrakt() throws JSONException, IOException {
+    public boolean saveSettings(String key, String data) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(key, data);
+        return editor.commit();
+    }
+
+    public boolean userLoggedIn() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        return !sharedPreferences.getString("trakt_user", "").equals("");
+    }
+
+    public JSONObject getCodeFromTrakt() {
         String url = mContext.getResources().getString(R.string.trakt_api_url) + "/oauth/device/code";
-        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
-        urlConnection.setRequestMethod("POST");
-        urlConnection.setRequestProperty("Content-Type","application/json");
 
-        JSONObject cid = new JSONObject();
-        cid.put("client_id", mContext.getResources().getString(R.string.trakt_api_key));
+        OkHttpClient client = new OkHttpClient();
+        Map<String, String> params = new HashMap<>();
+        params.put("client_id", mContext.getResources().getString(R.string.trakt_api_key));
+        JSONObject parameter = new JSONObject(params);
 
-        OutputStreamWriter ap_osw= new OutputStreamWriter(urlConnection.getOutputStream());
-        ap_osw.write(cid.toString());
-        ap_osw.flush();
-        ap_osw.close();
+        RequestBody body = RequestBody.create(MediaType.parse("application/json"), parameter.toString());
 
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
 
-        return new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
+        try {
+            Response response = client.newCall(request).execute();
+            String res = response.body().string().toString();
+            return new JSONObject(res);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+
     }
 
 
-    public JSONObject getTokenFromTrakt(String device_code) throws JSONException, IOException {
+
+    public JSONObject getTokenFromTrakt(String device_code) {
         String url = mContext.getResources().getString(R.string.trakt_api_url) + "/oauth/device/token";
-        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
-        urlConnection.setRequestMethod("POST");
-        urlConnection.setRequestProperty("Content-Type","application/json");
 
-        JSONObject cid = new JSONObject();
-        cid.put("client_id", mContext.getResources().getString(R.string.trakt_api_key));
-        cid.put("client_secret", mContext.getResources().getString(R.string.trakt_api_secret));
-        cid.put("code", device_code);
+        OkHttpClient client = new OkHttpClient();
+        Map<String, String> params = new HashMap<>();
+        params.put("client_id", mContext.getResources().getString(R.string.trakt_api_key));
+        params.put("client_secret", mContext.getResources().getString(R.string.trakt_api_secret));
+        params.put("code", device_code);
+        JSONObject parameter = new JSONObject(params);
 
-        System.out.println(cid);
+        RequestBody body = RequestBody.create(MediaType.parse("application/json"), parameter.toString());
 
-        OutputStreamWriter ap_osw= new OutputStreamWriter(urlConnection.getOutputStream());
-        ap_osw.write(cid.toString());
-        ap_osw.flush();
-        ap_osw.close();
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            String res = response.body().string().toString();
+            return new JSONObject(res);
+        } catch (Exception e) {
+
+        }
 
 
-        return new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
+        return null;
+
+
     }
 
 
-    public JSONObject getUserFromTrakt(String access_token) throws JSONException, IOException {
+    public JSONObject getUserFromTrakt(String access_token){
         String url = mContext.getResources().getString(R.string.trakt_api_url) + "/users/settings";
-        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
-        urlConnection.setRequestMethod("GET");
-        urlConnection.setRequestProperty("Content-Type","application/json");
 
-        urlConnection.setRequestProperty("Authorization","Bearer " + access_token);
-        urlConnection.setRequestProperty("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version));
-        urlConnection.setRequestProperty("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key));
 
-        return new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer " + access_token)
+                .addHeader("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version))
+                .addHeader("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key))
+                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            String res = response.body().string().toString();
+            return new JSONObject(res);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+        return null;
+
     }
 
 

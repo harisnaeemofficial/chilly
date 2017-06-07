@@ -64,12 +64,11 @@ public class Stream_genvideo extends StreamProvider {
 
         System.out.println("-------------------");
 
-        MediaType JSON = MediaType.parse("application/json; charset=UTF-8");
         Map<String, String> params = new HashMap<>();
         params.put("v", videotitle);
         JSONObject parameter = new JSONObject(params);
 
-        RequestBody body = RequestBody.create(JSON, parameter.toString());
+        RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=UTF-8"), parameter.toString());
 
         request = new Request.Builder()
                 .url(base_link + "/video_info/frame")

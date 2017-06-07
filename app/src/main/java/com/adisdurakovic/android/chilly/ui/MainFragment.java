@@ -154,13 +154,22 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
         // check if valid trakt is found and reset all buttons
 
         if(mCategoryRowAdapter.size() > 0) {
+            boolean reset = true;
             for(int i = 0; i < mCategoryRowAdapter.size(); i++) {
                 ListRow lr = (ListRow) mCategoryRowAdapter.get(i);
                 if(lr.getHeaderItem().getName().equals("MORE MOVIES")) {
-                    mCategoryRowAdapter.removeItems(i, 1);
-                    prepareMoreMovieButtons(i);
+                    for(int j = 0; j < lr.getAdapter().size(); j++) {
+                        Object item = lr.getAdapter().get(j);
+                        if(item instanceof ListElem) {
+                            if(((ListElem) item).slug.contains("trakt")) reset = false;
+                        }
+                    }
+                    if(reset) {
+                        mCategoryRowAdapter.removeItems(i, 1);
+                        prepareMoreMovieButtons(i);
+                    }
                 }
-                if(lr.getHeaderItem().getName().equals("MORE TV SHOWS")) {
+                if(lr.getHeaderItem().getName().equals("MORE TV SHOWS") && reset) {
                     mCategoryRowAdapter.removeItems(i, 1);
                     prepareMoreTVShowButtons(i);
                 }
@@ -481,11 +490,12 @@ class HomeLoaderTask extends AsyncTask<String, String, String> {
     List<Video> start_movies;
     List<Video> start_tvshows;
     HomeLoaderResponse delegate = null;
+    Context ctx;
     Chilly chilly = null;
 
     public HomeLoaderTask(Context ctx, HomeLoaderResponse del) {
         this.delegate = del;
-        chilly = new Chilly(ctx);
+        this.ctx = ctx;
     }
 
     // Before starting background thread Show Progress Dialog
@@ -499,8 +509,8 @@ class HomeLoaderTask extends AsyncTask<String, String, String> {
     protected String doInBackground(String... params) {
 
         try {
-            start_movies = chilly.getTrendingMovies(10);
-            start_tvshows = chilly.getTrendingTVShows(10);
+            start_movies = Chilly.getInstance(ctx).getTrendingMovies(10);
+            start_tvshows = Chilly.getInstance(ctx).getTrendingTVShows(10);
         } catch (Exception e) {
             e.printStackTrace();
         }

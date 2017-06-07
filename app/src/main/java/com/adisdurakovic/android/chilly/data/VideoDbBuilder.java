@@ -71,7 +71,7 @@ public class VideoDbBuilder {
 
     public VideoDbBuilder(Context mContext) {
         this.mContext = mContext;
-        chilly = new Chilly(mContext);
+        chilly = Chilly.getInstance(mContext);
     }
 
     /**
