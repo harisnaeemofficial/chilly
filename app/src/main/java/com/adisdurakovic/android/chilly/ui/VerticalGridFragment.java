@@ -71,11 +71,12 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
     private final CursorObjectAdapter mVideoCursorAdapter =
             new CursorObjectAdapter(new CardPresenter());
     private static final int ALL_VIDEOS_LOADER = 1;
-    private ArrayObjectAdapter mEpisodeadapter;
+    private ArrayObjectAdapter mVideoAdapter;
     private Video mSelectedShow;
     private Video mSelectedSeason;
     private SpinnerFragment mSpinnerFragment;
     ListElem elem;
+    private int page = 1;
 
 
     @Override
@@ -83,7 +84,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         super.onCreate(savedInstanceState);
 
         mSpinnerFragment = new SpinnerFragment();
-        getFragmentManager().beginTransaction().add(R.id.vertical_grid_fragment, mSpinnerFragment).commit();
+//        getFragmentManager().beginTransaction().add(R.id.vertical_grid_fragment, mSpinnerFragment).commit();
 
 //        mVideoCursorAdapter.setMapper(new VideoCursorMapper());
 
@@ -113,8 +114,8 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         }
 
 
-        mEpisodeadapter = new ArrayObjectAdapter(cp);
-        setAdapter(mEpisodeadapter);
+        mVideoAdapter = new ArrayObjectAdapter(cp);
+        setAdapter(mVideoAdapter);
         setGridPresenter(gridPresenter);
 
         if (savedInstanceState == null) {
@@ -135,7 +136,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
 
     private void setupFragment() {
 
-        new VideoLoaderTask(getActivity().getApplicationContext(), this, elem).execute();
+        loadVideos(page);
 
 
         // After 500ms, start the animation to transition the cards into view.
@@ -159,7 +160,12 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
 
     @Override
     public void onGrabVideos(List<Video> video_list) {
-        mEpisodeadapter.addAll(mEpisodeadapter.size(), video_list);
+        mVideoAdapter.addAll(mVideoAdapter.size(), video_list);
+
+//        ArrayObjectAdapter more_tvshows = new ArrayObjectAdapter(new GridItemPresenter());
+//        more_tvshows.add(new ListElem("Browse TV Shows", "trakt-public-list", "show", "display-list", ""));
+//        mVideoAdapter.add(more_tvshows);
+
         getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
     }
 
@@ -184,10 +190,24 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         }
     }
 
+    public void loadVideos(int page) {
+        getFragmentManager().beginTransaction().add(R.id.vertical_grid_fragment, mSpinnerFragment).commit();
+        new VideoLoaderTask(getActivity().getApplicationContext(), this, elem, page).execute();
+    }
+
     private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
         @Override
         public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
                 RowPresenter.ViewHolder rowViewHolder, Row row) {
+
+                Video v = (Video) item;
+                long pospage = 40*page;
+                if(v.position >= pospage-5 && v.position <= pospage) {
+                    if(page < ((pospage/40) + 1)) {
+                        page++;
+                        loadVideos(page);
+                    }
+                }
         }
     }
 
@@ -222,13 +242,15 @@ class VideoLoaderTask extends AsyncTask<String, String, String> {
     List<Video> video_list;
     private ListElem elem;
     Context ctx;
+    int page;
 
 
-    public VideoLoaderTask(Context ctx, VideoLoaderResponse del, ListElem elem) {
+    public VideoLoaderTask(Context ctx, VideoLoaderResponse del, ListElem elem, int page) {
         this.delegate = del;
         this.ctx = ctx;
         this.video_list = new ArrayList<>();
         this.elem = elem;
+        this.page = page;
     }
 
     // Before starting background thread Show Progress Dialog
@@ -248,7 +270,7 @@ class VideoLoaderTask extends AsyncTask<String, String, String> {
                 video_list = Chilly.getInstance(ctx).getEpisodesForShowSeason(elem.tvshow, elem.season);
             } else {
                 if(elem.slug.contains("public")) {
-                    video_list = Chilly.getInstance(ctx).getPublicVideos(elem.slug.replace("public-", ""), elem.videoType, 40);
+                    video_list = Chilly.getInstance(ctx).getPublicVideos(elem.slug.replace("public-", ""), elem.videoType, 40, page);
                 }
 
                 if(elem.slug.contains("user")) {

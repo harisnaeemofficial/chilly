@@ -44,6 +44,7 @@ public final class Video implements Parcelable {
     public final String seasonNumber;
     public final String episodeNumber;
     public final Video episodeShow;
+    public final long position;
 
 
     private Video(
@@ -62,7 +63,8 @@ public final class Video implements Parcelable {
             final long airedEpisodes,
             final String seasonNumber,
             final String episodeNumber,
-            final Video episodeShow
+            final Video episodeShow,
+            final long position
             ) {
         this.id = id;
         this.tvdb_id = tvdb_id;
@@ -80,6 +82,7 @@ public final class Video implements Parcelable {
         this.seasonNumber = seasonNumber;
         this.episodeNumber = episodeNumber;
         this.episodeShow = episodeShow;
+        this.position = position;
     }
 
     protected Video(Parcel in) {
@@ -99,6 +102,7 @@ public final class Video implements Parcelable {
         seasonNumber = in.readString();
         episodeNumber = in.readString();
         episodeShow = in.readParcelable(Video.class.getClassLoader());
+        position = in.readLong();
     }
 
     public static final Creator<Video> CREATOR = new Creator<Video>() {
@@ -140,6 +144,7 @@ public final class Video implements Parcelable {
         dest.writeString(seasonNumber);
         dest.writeString(episodeNumber);
         dest.writeParcelable(episodeShow, flags);
+        dest.writeLong(position);
     }
 
     @Override
@@ -167,6 +172,7 @@ public final class Video implements Parcelable {
         s += ", seasonNumber='" + seasonNumber + "'";
         s += ", episodeNumber='" + episodeNumber + "'";
         s += ", episodeShow='" + es + "'";
+        s += ", position='" + position + "'";
         s += "}";
         return s;
     }
@@ -189,6 +195,7 @@ public final class Video implements Parcelable {
         private String seasonNumber;
         private String episodeNumber;
         private Video episodeShow;
+        public long position;
 
 
         public VideoBuilder id(long id) {
@@ -272,6 +279,11 @@ public final class Video implements Parcelable {
             return this;
         }
 
+        public VideoBuilder position(long position) {
+            this.position = position;
+            return this;
+        }
+
 
         public Video buildFromMediaDesc(MediaDescription desc) {
             return new Video(
@@ -290,7 +302,8 @@ public final class Video implements Parcelable {
                     0,
                     "",
                     "",
-                    null
+                    null,
+                    0
             );
         }
 
@@ -311,7 +324,8 @@ public final class Video implements Parcelable {
                     airedEpisodes,
                     seasonNumber,
                     episodeNumber,
-                    episodeShow
+                    episodeShow,
+                    position
             );
         }
     }

@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.model.Video;
@@ -42,6 +43,8 @@ public class Chilly {
     private Context mContext;
     private Video tvshow;
     private Video season;
+    private int page;
+    private String TAG = "CHILLY";
 
     private Chilly(Context ctx) {
         mContext = ctx;
@@ -60,9 +63,10 @@ public class Chilly {
         return list;
     }
 
-    public List<Video> getPublicVideos(String list_type, String videoType, int limit) throws JSONException, IOException {
+    public List<Video> getPublicVideos(String list_type, String videoType, int limit, int p) throws JSONException, IOException {
+        page = p;
         List<Video> list;
-        list = getVideos(videoType, mContext.getResources().getString(R.string.trakt_api_url) + "/" + videoType + "s/" + list_type + "?extended=full&page=1&limit=" + String.valueOf(limit));
+        list = getVideos(videoType, mContext.getResources().getString(R.string.trakt_api_url) + "/" + videoType + "s/" + list_type + "?extended=full&page=" + String.valueOf(page) + "&limit=" + String.valueOf(limit));
         return list;
     }
 
@@ -185,11 +189,9 @@ public class Chilly {
 
         List<Video> videos = new ArrayList<>();
 
-        System.out.println(trakt_list_url);
+        Log.d(TAG, trakt_list_url);
 
         JSONArray data_list = getListFromTrakt(trakt_list_url);
-        System.out.println(trakt_list_url);
-        System.out.println(data_list);
 
         for(int i = 0; i < data_list.length(); i++) {
 
@@ -274,6 +276,7 @@ public class Chilly {
                     .seasonNumber(seasonNumber)
                     .episodeNumber(episodeNumber)
                     .episodeShow(tvshow)
+                    .position(40*(page-1)+(i+1))
                     .build();
 
 
