@@ -53,6 +53,8 @@ public class ListSelectActivity extends Activity implements ListResponse {
     };
 
     private static List<ListElem> lists = new ArrayList<>();
+    private static String title = "";
+    private static String subtitle = "";
 
     private static final String[] MOVIE_LISTS_INTENTVARS = {
             "movies_trending",
@@ -90,8 +92,10 @@ public class ListSelectActivity extends Activity implements ListResponse {
     }
 
     @Override
-    public void onListGrab(List<ListElem> output) {
+    public void onListGrab(List<ListElem> output, String t, String st) {
         lists = output;
+        title = t;
+        subtitle = st;
         GuidedStepFragment.addAsRoot(this, new FirstStepFragment(), android.R.id.content);
     }
 
@@ -108,11 +112,8 @@ public class ListSelectActivity extends Activity implements ListResponse {
         @Override
         @NonNull
         public Guidance onCreateGuidance(@NonNull Bundle savedInstanceState) {
-            String title = getString(R.string.movies_browse);
-            String breadcrumb = "";
-            String description = getString(R.string.guidedstep_first_description);
             Drawable icon = getActivity().getDrawable(R.drawable.ic_main_icon);
-            return new Guidance(title, description, breadcrumb, icon);
+            return new Guidance(title, subtitle, "", null);
         }
 
         @Override
@@ -150,7 +151,7 @@ public class ListSelectActivity extends Activity implements ListResponse {
 }
 
 interface ListResponse {
-    void onListGrab(List<ListElem> output);
+    void onListGrab(List<ListElem> output, String title, String subtitle);
 }
 
 
@@ -160,6 +161,8 @@ class ListTask extends AsyncTask<String, String, String> {
     ListResponse delegate;
     List<ListElem> list = new ArrayList<ListElem>();
     Context ctx;
+    String title = "";
+    String subtitle = "";
 
     public ListTask(Context ctx, ListResponse del, ListElem item) {
         this.item = item;
@@ -182,12 +185,18 @@ class ListTask extends AsyncTask<String, String, String> {
             switch(item.slug) {
                 case "genres":
                     list = Chilly.getInstance(ctx).getGenres(item.videoType);
+                    title = "GENRES";
+                    subtitle = "Browse " + item.videoType + "s by genres";
                     break;
                 case "trakt-public-list":
                     list = Chilly.getInstance(ctx).getPublicList(item.videoType);
+                    title = item.videoType.toUpperCase() + "S";
+                    subtitle = "Browse " + item.videoType + "s by categories";
                     break;
                 case "trakt-actions":
                     list = Chilly.getInstance(ctx).getTraktActions(item.videoType);
+                    title = "TRAKT";
+                    subtitle = "Perform a Trakt-action";
             }
 
         } catch (Exception e) {
@@ -199,6 +208,6 @@ class ListTask extends AsyncTask<String, String, String> {
 
     // After completing background task Dismiss the progress dialog
     protected void onPostExecute(String somestring) {
-        delegate.onListGrab(list);
+        delegate.onListGrab(list, title, subtitle);
     }
 }
