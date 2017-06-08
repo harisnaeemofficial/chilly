@@ -27,10 +27,12 @@ import android.support.v17.leanback.app.GuidedStepFragment;
 import android.support.v17.leanback.widget.GuidanceStylist.Guidance;
 import android.support.v17.leanback.widget.GuidedAction;
 import android.support.v4.app.ActivityOptionsCompat;
+import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.data.Chilly;
 import com.adisdurakovic.android.chilly.data.ListElem;
+import com.adisdurakovic.android.chilly.model.Video;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -55,6 +57,7 @@ public class ListSelectActivity extends Activity implements ListResponse {
     private static List<ListElem> lists = new ArrayList<>();
     private static String title = "";
     private static String subtitle = "";
+    private static Video video = null;
 
     private static final String[] MOVIE_LISTS_INTENTVARS = {
             "movies_trending",
@@ -92,10 +95,11 @@ public class ListSelectActivity extends Activity implements ListResponse {
     }
 
     @Override
-    public void onListGrab(List<ListElem> output, String t, String st) {
+    public void onListGrab(List<ListElem> output, String t, String st, Video v) {
         lists = output;
         title = t;
         subtitle = st;
+        video = v;
         GuidedStepFragment.addAsRoot(this, new FirstStepFragment(), android.R.id.content);
     }
 
@@ -135,14 +139,29 @@ public class ListSelectActivity extends Activity implements ListResponse {
 
         @Override
         public void onGuidedActionClicked(GuidedAction action) {
-
-            Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
-            int intid = (int) action.getId();
-            intent.putExtra("listElem", lists.get(intid));
-            Bundle bundle =
-                    ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
-                            .toBundle();
-            startActivity(intent, bundle);
+            if(action.getTitle().toString().contains("Add to")) {
+                if(video != null) {
+                    if(action.getTitle().toString().contains("Collection")) {
+                        new TraktTask(getActivity().getApplicationContext(), "add-to-collection", video).execute();
+                    } else if(action.getTitle().toString().contains("Watchlist")) {
+                        new TraktTask(getActivity().getApplicationContext(), "add-to-watchlist", video).execute();
+                    }
+                    Toast.makeText(getActivity(), "DONE!", Toast.LENGTH_SHORT).show();
+                }
+            } else if(action.getTitle().toString().contains("Mark as")) {
+                if(video != null) {
+                    new TraktTask(getActivity().getApplicationContext(), "mark-as-watched", video).execute();
+                    Toast.makeText(getActivity(), "DONE!", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
+                int intid = (int) action.getId();
+                intent.putExtra("listElem", lists.get(intid));
+                Bundle bundle =
+                        ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+                                .toBundle();
+                startActivity(intent, bundle);
+            }
 
         }
     }
@@ -151,7 +170,7 @@ public class ListSelectActivity extends Activity implements ListResponse {
 }
 
 interface ListResponse {
-    void onListGrab(List<ListElem> output, String title, String subtitle);
+    void onListGrab(List<ListElem> output, String title, String subtitle, Video video);
 }
 
 
@@ -194,9 +213,10 @@ class ListTask extends AsyncTask<String, String, String> {
                     subtitle = "Browse " + item.videoType + "s by categories";
                     break;
                 case "trakt-actions":
-                    list = Chilly.getInstance(ctx).getTraktActions(item.videoType);
+                    list = Chilly.getInstance(ctx).getTraktActions(item.videoType, item.video);
                     title = "TRAKT";
                     subtitle = "Perform a Trakt-action";
+
             }
 
         } catch (Exception e) {
@@ -208,6 +228,54 @@ class ListTask extends AsyncTask<String, String, String> {
 
     // After completing background task Dismiss the progress dialog
     protected void onPostExecute(String somestring) {
-        delegate.onListGrab(list, title, subtitle);
+        delegate.onListGrab(list, title, subtitle, item.video);
     }
 }
+
+
+class TraktTask extends AsyncTask<String, String, String> {
+
+    Context ctx;
+    String action;
+    Video v;
+
+    public TraktTask(Context ctx, String action, Video video) {
+        this.action = action;
+        this.v = video;
+        this.ctx = ctx;
+    }
+
+    // Before starting background thread Show Progress Dialog
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+    }
+
+    // Checking login in background
+    protected String doInBackground(String... params) {
+
+
+
+        switch (action) {
+            case "add-to-collection":
+                Chilly.getInstance(ctx).addToTrakt("collection", v);
+                break;
+            case "add-to-watchlist":
+                Chilly.getInstance(ctx).addToTrakt("watchlist", v);
+                break;
+            case "mark-as-watched":
+                Chilly.getInstance(ctx).markAsWatched(v);
+                break;
+        }
+
+        return "";
+
+    }
+
+    // After completing background task Dismiss the progress dialog
+    protected void onPostExecute(String somestring) {
+//        delegate.onListGrab(list, title, subtitle, item.video);
+    }
+}
+
+

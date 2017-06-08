@@ -224,7 +224,8 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
                     new StreamTask(mFragment, mSelectedVideo).execute();
                 } else if (action.getId() == ACTION_TRAKT) {
                     Intent intent = new Intent(getActivity(), ListSelectActivity.class);
-                    intent.putExtra("listElem", new ListElem("Trakt", "trakt-actions", "", "", ""));
+                    ListElem le = new ListElem("Trakt", "trakt-actions", mSelectedVideo);
+                    intent.putExtra("listElem", le);
                     Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity()).toBundle();
                     startActivity(intent, bundle);
                 } else {

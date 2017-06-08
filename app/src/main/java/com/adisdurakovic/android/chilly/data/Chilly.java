@@ -139,12 +139,12 @@ public class Chilly {
         return public_list;
     }
 
-    public List<ListElem> getTraktActions(String forElem) {
+    public List<ListElem> getTraktActions(String forElem, Video video) {
         List<ListElem> trakt_actions = new ArrayList<>();
 
-        trakt_actions.add(trakt_actions.size(), new ListElem("Add to Collection", "trakt-add-collection", forElem, "trakt-api", ""));
-        trakt_actions.add(trakt_actions.size(), new ListElem("Add to Watchlist", "trakt-add-watchlist", forElem, "trakt-api", ""));
-        trakt_actions.add(trakt_actions.size(), new ListElem("Mark as watched", "trakt-mark-watched", forElem, "trakt-api", ""));
+        trakt_actions.add(trakt_actions.size(), new ListElem("Add to Collection", "trakt-add-to-collection", video));
+        trakt_actions.add(trakt_actions.size(), new ListElem("Add to Watchlist", "trakt-add-to-watchlist", video));
+        trakt_actions.add(trakt_actions.size(), new ListElem("Mark as watched", "trakt-mark-watched", video));
 
         return trakt_actions;
     }
@@ -153,7 +153,7 @@ public class Chilly {
 
         String ret = "";
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-        String userstring = sharedPreferences.getString("trakt_user", "NOTOKEN");
+        String userstring = sharedPreferences.getString("trakt_user", "");
         try {
             JSONObject trakt_user = new JSONObject(userstring);
             ret = trakt_user.getJSONObject("user").getJSONObject("ids").getString("slug");
@@ -449,6 +449,105 @@ public class Chilly {
     public boolean userLoggedIn() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
         return !sharedPreferences.getString("trakt_user", "").equals("");
+    }
+
+    public void addToTrakt(String where, Video video) {
+        System.out.println("ADD To T");
+        String url = mContext.getResources().getString(R.string.trakt_api_url) + "/sync/" + where;
+        OkHttpClient client = new OkHttpClient();
+
+        JSONObject v = new JSONObject();
+        JSONArray va = new JSONArray();
+        JSONObject e = new JSONObject();
+        JSONObject ids = new JSONObject();
+
+        try {
+            ids.put("trakt", video.id);
+            e.put("ids", ids);
+            va.put(e);
+            v.put(video.videoType + "s", va);
+
+            RequestBody body = RequestBody.create(MediaType.parse("application/json"), v.toString());
+
+            Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("Authorization", "Bearer " + getAccessToken())
+                    .addHeader("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version))
+                    .addHeader("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key))
+                    .post(body)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            System.out.println(response.body().string());
+            System.out.println(response.headers());
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        System.out.println(v);
+
+
+    }
+
+    public void markAsWatched(Video video) {
+        System.out.println("ADD To T");
+        String url = mContext.getResources().getString(R.string.trakt_api_url) + "/scrobble/start";
+        OkHttpClient client = new OkHttpClient();
+
+        JSONObject v = new JSONObject();
+        JSONObject va = new JSONObject();
+        JSONObject e = new JSONObject();
+        JSONObject ids = new JSONObject();
+
+        try {
+            ids.put("trakt", video.id);
+            e.put("ids", ids);
+            v.put(video.videoType, e);
+            v.put("progress", 1);
+            v.put("app_version", mContext.getResources().getString(R.string.chilly_version));
+            v.put("app_date", mContext.getResources().getString(R.string.chilly_date));
+
+            RequestBody body = RequestBody.create(MediaType.parse("application/json"), v.toString());
+
+            Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("Authorization", "Bearer " + getAccessToken())
+                    .addHeader("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version))
+                    .addHeader("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key))
+                    .post(body)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+
+            v.remove("progress");
+            v.put("progress", 99);
+            body = RequestBody.create(MediaType.parse("application/json"), v.toString());
+            url = mContext.getResources().getString(R.string.trakt_api_url) + "/scrobble/stop";
+
+            request = new Request.Builder()
+                    .url(url)
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("Authorization", "Bearer " + getAccessToken())
+                    .addHeader("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version))
+                    .addHeader("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key))
+                    .post(body)
+                    .build();
+
+            response = client.newCall(request).execute();
+
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        System.out.println(v);
+
+
     }
 
     public JSONObject getCodeFromTrakt() {

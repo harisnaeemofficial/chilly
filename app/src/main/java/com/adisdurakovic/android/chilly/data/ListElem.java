@@ -15,6 +15,7 @@ public class ListElem implements Parcelable {
     public String videoType;
     public String filterType;
     public String action;
+    public Video video;
     public Video tvshow;
     public Video season;
 
@@ -28,8 +29,16 @@ public class ListElem implements Parcelable {
         this.videoType = vt;
         this.action = a;
         this.filterType = ft;
-        this.season = null;
-        this.tvshow = null;
+        this.video = null;
+    }
+
+    public ListElem(String t, String s, Video v) {
+        this.title = t;
+        this.slug = s;
+        this.videoType = "";
+        this.action = "";
+        this.filterType = "";
+        this.video = v;
     }
 
     public ListElem(Parcel in) {
@@ -38,6 +47,7 @@ public class ListElem implements Parcelable {
         videoType = in.readString();
         action = in.readString();
         filterType = in.readString();
+        video = in.readParcelable(Video.class.getClassLoader());
     }
 
 
@@ -51,6 +61,7 @@ public class ListElem implements Parcelable {
         dest.writeString(videoType);
         dest.writeString(action);
         dest.writeString(filterType);
+        dest.writeParcelable(video, flags);
     }
 
     public static final Creator<ListElem> CREATOR = new Creator<ListElem>() {

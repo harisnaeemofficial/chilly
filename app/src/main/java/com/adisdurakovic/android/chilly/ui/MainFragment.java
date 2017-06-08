@@ -332,8 +332,8 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
     }
 
     private void updateRecommendations() {
-        Intent recommendationIntent = new Intent(getActivity(), UpdateRecommendationsService.class);
-        getActivity().startService(recommendationIntent);
+//        Intent recommendationIntent = new Intent(getActivity(), UpdateRecommendationsService.class);
+//        getActivity().startService(recommendationIntent);
     }
 
 

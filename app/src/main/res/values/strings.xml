@@ -58,6 +58,10 @@
     <string name="no_search_results">No search results found for \'%1$s\'</string>
     <string name="catalog_url">https://codecraft.at/tv.json</string>
 
+    <string name="chilly_version">1.0.0</string>
+    <!-- y-m-d -->
+    <string name="chilly_date">2017-06-08</string>
+
     <!--IMDB -->
     <string name="imdb_url_movies_popular"><![CDATA[http://www.imdb.com/search/title?title_type=feature,tv_movie&num_votes=1000,&production_status=released&release_date=date%5B365%5D,date%5B60%5D&count=10&start=1&view=advanced&sort=moviemeter,asc]]></string>
     <string name="imdb_url_tvshows_popular"><![CDATA[http://www.imdb.com/search/title?title_type=tv_series,mini_series&num_votes=100,&release_date=,date[0]&sort=moviemeter,asc&count=10&start=1]]></string>
