@@ -22,6 +22,7 @@ import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v4.content.ContextCompat;
 import android.view.ContextThemeWrapper;
+import android.view.View;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
@@ -54,12 +55,14 @@ public class CardPresenter extends Presenter {
                 super.setSelected(selected);
             }
 
+
         };
 
 
         cardView.setFocusable(true);
         cardView.setFocusableInTouchMode(true);
         updateCardBackgroundColor(cardView, false);
+
         return new ViewHolder(cardView);
     }
 
@@ -80,6 +83,7 @@ public class CardPresenter extends Presenter {
         cardView.setTitleText(video.title);
         cardView.setContentText(video.productionYear);
 
+
         if (video.cardImageUrl != null) {
             // Set card size from dimension resources.
             Resources res = cardView.getResources();
@@ -92,6 +96,7 @@ public class CardPresenter extends Presenter {
             }
 
             cardView.setMainImageDimensions(width, height);
+            if(video.watched) cardView.setBadgeImage(cardView.getResources().getDrawable(R.drawable.watched_check, null));
 
             Glide.with(cardView.getContext())
                     .load(video.cardImageUrl)
@@ -105,7 +110,7 @@ public class CardPresenter extends Presenter {
         ImageCardView cardView = (ImageCardView) viewHolder.view;
 
         // Remove references to images so that the garbage collector can free up memory.
-        cardView.setBadgeImage(null);
+//        cardView.setBadgeImage(null);
         cardView.setMainImage(null);
     }
 }

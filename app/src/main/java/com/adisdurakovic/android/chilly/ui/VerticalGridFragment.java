@@ -58,6 +58,7 @@ import com.adisdurakovic.android.chilly.model.VideoCursorMapper;
 import com.adisdurakovic.android.chilly.presenter.CardPresenter;
 import com.adisdurakovic.android.chilly.presenter.GridItemPresenter;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -190,6 +191,21 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         }
     }
 
+    public int getPosition() {
+        try {
+            Field privatePosition =
+                    android.support.v17.leanback.app.VerticalGridFragment.class.getDeclaredField("mSelectedPosition");
+            privatePosition.setAccessible(true);
+
+            int pos = (int) privatePosition.get(this);
+            return pos+1;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+
+    }
+
     public void loadVideos(int page) {
         getFragmentManager().beginTransaction().add(R.id.vertical_grid_fragment, mSpinnerFragment).commit();
         new VideoLoaderTask(getActivity().getApplicationContext(), this, elem, page).execute();
@@ -199,10 +215,9 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         @Override
         public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
                 RowPresenter.ViewHolder rowViewHolder, Row row) {
-
                 Video v = (Video) item;
                 long pospage = 40*page;
-                if(v.position >= pospage-5 && v.position <= pospage) {
+                if(getPosition() >= pospage-5 && getPosition() <= pospage) {
                     if(page < ((pospage/40) + 1)) {
                         page++;
                         loadVideos(page);

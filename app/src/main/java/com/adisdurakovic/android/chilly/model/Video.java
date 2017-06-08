@@ -44,7 +44,10 @@ public final class Video implements Parcelable {
     public final String seasonNumber;
     public final String episodeNumber;
     public final Video episodeShow;
-    public final long position;
+    public final long runtime;
+    public final long rating;
+    public final String trailer;
+    public final boolean watched;
 
 
     private Video(
@@ -64,7 +67,10 @@ public final class Video implements Parcelable {
             final String seasonNumber,
             final String episodeNumber,
             final Video episodeShow,
-            final long position
+            final long runtime,
+            final long rating,
+            final String trailer,
+            final boolean watched
             ) {
         this.id = id;
         this.tvdb_id = tvdb_id;
@@ -82,7 +88,10 @@ public final class Video implements Parcelable {
         this.seasonNumber = seasonNumber;
         this.episodeNumber = episodeNumber;
         this.episodeShow = episodeShow;
-        this.position = position;
+        this.runtime = runtime;
+        this.rating = rating;
+        this.trailer = trailer;
+        this.watched = watched;
     }
 
     protected Video(Parcel in) {
@@ -102,7 +111,10 @@ public final class Video implements Parcelable {
         seasonNumber = in.readString();
         episodeNumber = in.readString();
         episodeShow = in.readParcelable(Video.class.getClassLoader());
-        position = in.readLong();
+        runtime = in.readLong();
+        rating = in.readLong();
+        trailer = in.readString();
+        watched = in.readByte() != 0;
     }
 
     public static final Creator<Video> CREATOR = new Creator<Video>() {
@@ -144,7 +156,10 @@ public final class Video implements Parcelable {
         dest.writeString(seasonNumber);
         dest.writeString(episodeNumber);
         dest.writeParcelable(episodeShow, flags);
-        dest.writeLong(position);
+        dest.writeLong(runtime);
+        dest.writeLong(rating);
+        dest.writeString(trailer);
+        dest.writeByte(((byte)(watched? 1 : 0)));
     }
 
     @Override
@@ -172,7 +187,10 @@ public final class Video implements Parcelable {
         s += ", seasonNumber='" + seasonNumber + "'";
         s += ", episodeNumber='" + episodeNumber + "'";
         s += ", episodeShow='" + es + "'";
-        s += ", position='" + position + "'";
+        s += ", runtime='" + runtime + "'";
+        s += ", rating='" + rating + "'";
+        s += ", trailer='" + trailer + "'";
+        s += ", watched='" + watched + "'";
         s += "}";
         return s;
     }
@@ -195,8 +213,10 @@ public final class Video implements Parcelable {
         private String seasonNumber;
         private String episodeNumber;
         private Video episodeShow;
-        public long position;
-
+        public long runtime;
+        public long rating;
+        private String trailer;
+        private boolean watched;
 
         public VideoBuilder id(long id) {
             this.id = id;
@@ -279,8 +299,23 @@ public final class Video implements Parcelable {
             return this;
         }
 
-        public VideoBuilder position(long position) {
-            this.position = position;
+        public VideoBuilder runtime(long runtime) {
+            this.runtime = runtime;
+            return this;
+        }
+
+        public VideoBuilder rating(long rating) {
+            this.rating = rating;
+            return this;
+        }
+
+        public VideoBuilder trailer(String trailer) {
+            this.trailer = trailer;
+            return this;
+        }
+
+        public VideoBuilder watched(boolean watched) {
+            this.watched = watched;
             return this;
         }
 
@@ -303,7 +338,10 @@ public final class Video implements Parcelable {
                     "",
                     "",
                     null,
-                    0
+                    0,
+                    0,
+                    "",
+                    false
             );
         }
 
@@ -325,7 +363,10 @@ public final class Video implements Parcelable {
                     seasonNumber,
                     episodeNumber,
                     episodeShow,
-                    position
+                    runtime,
+                    rating,
+                    trailer,
+                    watched
             );
         }
     }

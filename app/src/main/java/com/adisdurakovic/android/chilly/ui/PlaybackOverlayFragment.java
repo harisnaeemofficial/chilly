@@ -89,7 +89,6 @@ public class PlaybackOverlayFragment
         extends android.support.v17.leanback.app.PlaybackOverlayFragment
         implements TextureView.SurfaceTextureListener,
         VideoPlayer.Listener
-        , StreamResponse
 {
     private static final String TAG = "PlaybackOverlayFragment";
     private static final int BACKGROUND_TYPE = PlaybackOverlayFragment.BG_LIGHT;
@@ -206,9 +205,8 @@ public class PlaybackOverlayFragment
         updatePlaybackRow();
         setAdapter(mRowsAdapter);
 
-        new StreamTask(this, mSelectedVideo).execute();
 
-//        startPlaying();
+        startPlaying();
 
     }
 
@@ -239,20 +237,6 @@ public class PlaybackOverlayFragment
         setOnItemViewClickedListener(new ItemViewClickedListener());
     }
 
-
-    @Override
-    public void onStreamGrab(String streamurl) {
-
-        if(streamurl.equals("")) {
-            Toast.makeText(getActivity().getApplicationContext(), "No stream found!", Toast.LENGTH_LONG).show();
-            getActivity().finish();
-        }
-
-        mSelectedVideo.videoUrl = streamurl;
-        stream_newurl = streamurl;
-
-        startPlaying();
-    }
 
     private boolean updateSelectedVideo(Video video) {
 //        Intent intent = new Intent(getActivity().getIntent());
@@ -804,50 +788,5 @@ public class PlaybackOverlayFragment
         public void onSeekTo(long position) {
             setPosition(position);
         }
-    }
-}
-
-interface StreamResponse {
-    void onStreamGrab(String output);
-}
-
-
-class StreamTask extends AsyncTask<String, String, String> {
-
-    private final Video mSelectedVideo;
-    StreamResponse delegate;
-    String streamurl = "";
-
-    public StreamTask(StreamResponse del, Video video) {
-        this.mSelectedVideo = video;
-        this.delegate = del;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-
-        try {
-            streamurl = StreamGrabber.getLastSource(mSelectedVideo);
-        } catch (IOException e) {
-
-        }
-
-        return streamurl;
-
-    }
-
-    // After completing background task Dismiss the progress dialog
-    protected void onPostExecute(String streamurl) {
-        // dismiss the dialog once done
-//        System.out.println(streamurl);
-        delegate.onStreamGrab(streamurl);
-
     }
 }

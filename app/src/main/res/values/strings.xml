@@ -25,6 +25,7 @@
     <string name="browse_title"><![CDATA[Chilly]]></string>
     <string name="related_movies">Related Videos</string>
     <string name="tvshow_seasons">Seasons</string>
+    <string name="tvshow_season">Season</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
 
     <string name="popular_header">Popular Videos</string>

@@ -193,6 +193,9 @@ public class Chilly {
 
         JSONArray data_list = getListFromTrakt(trakt_list_url);
 
+        String watchtype = (type.equals("movie") ? "movies" : "shows");
+        JSONArray watched_videos = getWatched(watchtype);
+
         for(int i = 0; i < data_list.length(); i++) {
 
             JSONObject trakt_elem = null;
@@ -205,6 +208,8 @@ public class Chilly {
             String seasonNumber = "";
             String episodeNumber = "";
 
+            boolean watched = false;
+
             switch (type) {
                 case "movie":
                     trakt_elem = data_list.optJSONObject(i).optJSONObject("movie");
@@ -216,6 +221,15 @@ public class Chilly {
                     poster = getPoster(fanart_media, "movieposter", "", "");
                     background = getBackground(fanart_media, "moviebackground");
                     year = trakt_elem.optString("year");
+
+                    for(int w = 0; w < watched_videos.length(); w++) {
+                        JSONObject wm = watched_videos.getJSONObject(w);
+                        if(trakt_elem.optJSONObject("ids").getString("trakt").equals(wm.getJSONObject("movie").getJSONObject("ids").getString("trakt"))) {
+                            watched = true;
+                            break;
+                        }
+                    }
+
                     break;
                 case "show":
                     trakt_elem = data_list.optJSONObject(i).optJSONObject("show");
@@ -227,6 +241,21 @@ public class Chilly {
                     poster = getPoster(fanart_media, "tvposter", "", "");
                     background = getBackground(fanart_media, "showbackground");
                     year = trakt_elem.optString("year");
+
+                    for(int w = 0; w < watched_videos.length(); w++) {
+                        JSONObject wm = watched_videos.getJSONObject(w);
+                        if(trakt_elem.getJSONObject("ids").optString("trakt").equals(wm.getJSONObject("show").getJSONObject("ids").getString("trakt"))) {
+                            int watched_episodes = 0;
+                            for(int s = 0; s < wm.getJSONArray("seasons").length(); s++) {
+                                JSONObject se = wm.getJSONArray("seasons").getJSONObject(s);
+                                watched_episodes += se.getJSONArray("episodes").length();
+                            }
+                            if(watched_episodes == trakt_elem.getLong("aired_episodes")) {
+                                watched = true;
+                            }
+                        }
+                    }
+
                     break;
                 case "season":
                     trakt_elem = data_list.optJSONObject(i);
@@ -236,6 +265,24 @@ public class Chilly {
                     poster = getPoster(fanart_media, "seasonposter", "tvposter", trakt_elem.optString("number"));
                     background = getBackground(fanart_media, "showbackground");
                     year = trakt_elem.optString("first_aired").substring(0, 4);
+
+
+                    for(int w = 0; w < watched_videos.length(); w++) {
+                        JSONObject wm = watched_videos.getJSONObject(w);
+                        if(tvshow.id == wm.getJSONObject("show").getJSONObject("ids").getLong("trakt")) {
+                            for(int s = 0; s < wm.getJSONArray("seasons").length(); s++) {
+                                JSONObject se = wm.getJSONArray("seasons").getJSONObject(s);
+                                if(se.getLong("number") == trakt_elem.getLong("number")) {
+                                    if(trakt_elem.getLong("aired_episodes") == se.getJSONArray("episodes").length()) {
+                                        watched = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
                     break;
                 case "episode":
                     trakt_elem = data_list.optJSONObject(i);
@@ -249,6 +296,26 @@ public class Chilly {
                     year = "S" + zeroAppended(trakt_elem.optString("season")) + "E" + zeroAppended(trakt_elem.optString("number"));
                     seasonNumber = trakt_elem.getString("season");
                     episodeNumber = trakt_elem.getString("number");
+
+
+                    for(int w = 0; w < watched_videos.length(); w++) {
+                        JSONObject wm = watched_videos.getJSONObject(w);
+                        if(tvshow.id == wm.getJSONObject("show").getJSONObject("ids").getLong("trakt")) {
+                            for(int s = 0; s < wm.getJSONArray("seasons").length(); s++) {
+                                JSONObject se = wm.getJSONArray("seasons").getJSONObject(s);
+                                if(!se.getString("number").equals(seasonNumber)) continue;
+                                for(int e = 0; e < se.getJSONArray("episodes").length(); e++) {
+                                    JSONObject ee = se.getJSONArray("episodes").getJSONObject(e);
+                                    if(ee.getLong("number") == trakt_elem.getLong("number")) {
+                                        watched = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
                     break;
             }
 
@@ -276,7 +343,10 @@ public class Chilly {
                     .seasonNumber(seasonNumber)
                     .episodeNumber(episodeNumber)
                     .episodeShow(tvshow)
-                    .position(40*(page-1)+(i+1))
+                    .runtime(40*(page-1)+(i+1))
+                    .rating(trakt_elem.getLong("rating"))
+                    .trailer(trakt_elem.optString("trailer"))
+                    .watched(watched)
                     .build();
 
 
@@ -289,6 +359,28 @@ public class Chilly {
         return videos;
 
 
+    }
+
+    private JSONArray getWatched(String type) {
+        JSONArray watched = new JSONArray();
+
+        String url = mContext.getResources().getString(R.string.trakt_api_url) + "/users/" + getUserSlug() + "/watched/" + type;
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer " + getAccessToken())
+                .addHeader("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version))
+                .addHeader("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key))
+                .build();
+
+        try {
+            watched = new JSONArray(client.newCall(request).execute().body().string());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return watched;
     }
 
     private String zeroAppended(String value) {

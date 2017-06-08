@@ -142,16 +142,10 @@ public class StreamProvider {
 
 
         while (matcher.find()) {
-            quality = matcher.group();
+            System.out.println(matcher.group());
+            quality = matcher.group().replace("itag=", "");
         }
 
-        pattern = Pattern.compile("=m(\\d*)$");
-//        Pattern pattern = Pattern.compile("(https:.*?redirector.*?)[\\'\\\"]");
-        matcher = pattern.matcher(url);
-
-        while (matcher.find()) {
-            quality = quality + matcher.group();
-        }
 
         if(Arrays.asList(q4K).contains(quality)) {
             return 4096;

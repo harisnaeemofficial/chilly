@@ -111,6 +111,7 @@ public class Stream_miradetodo extends StreamProvider {
 
 
                 String link_3 = link_3_elem.attr("href");
+                if(link_3.equals("")) continue;
 
                 if(link_3.startsWith("//")) {
                     link_3 = "http:" + link_3;

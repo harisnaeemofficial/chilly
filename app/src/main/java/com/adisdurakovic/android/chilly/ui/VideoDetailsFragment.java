@@ -46,6 +46,7 @@ import android.support.v17.leanback.widget.SparseArrayObjectAdapter;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,6 +55,8 @@ import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.data.Chilly;
 import com.adisdurakovic.android.chilly.data.ListElem;
+import com.adisdurakovic.android.chilly.stream.StreamGrabber;
+import com.adisdurakovic.android.chilly.stream.StreamSource;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -63,6 +66,7 @@ import com.adisdurakovic.android.chilly.model.VideoCursorMapper;
 import com.adisdurakovic.android.chilly.presenter.CardPresenter;
 import com.adisdurakovic.android.chilly.presenter.DetailsDescriptionPresenter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,7 +74,7 @@ import java.util.List;
  * VideoDetailsFragment extends DetailsFragment, a Wrapper fragment for leanback details screens.
  * It shows a detailed view of video and its metadata plus related videos.
  */
-public class VideoDetailsFragment extends DetailsFragment implements SeasonResponse {
+public class VideoDetailsFragment extends DetailsFragment implements SeasonResponse, StreamResponse {
     private static final int NO_NOTIFICATION = -1;
     private static final int ACTION_PLAY_NOW = 1;
     private static final int ACTION_PLAY_FROM = 2;
@@ -122,6 +126,16 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
             NotificationManager notificationManager = (NotificationManager) getActivity()
                     .getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.cancel(notificationId);
+        }
+    }
+
+    @Override
+    public void onStreamGrab(List<StreamSource> sources) {
+//        Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
+//        intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
+//        startActivity(intent);
+        for(StreamSource s : sources) {
+            Log.d("SS", s.quality + "-" +  s.provider);
         }
     }
 
@@ -204,10 +218,10 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
             @Override
             public void onActionClicked(Action action) {
                 if (action.getId() == ACTION_PLAY_NOW) {
-                    Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
-                    intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
-                    startActivity(intent);
-//                    new StreamTask(mFragment, mSelectedVideo).execute();
+//                    Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
+//                    intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
+//                    startActivity(intent);
+                    new StreamTask(mFragment, mSelectedVideo).execute();
                 } else if (action.getId() == ACTION_TRAKT) {
                     Intent intent = new Intent(getActivity(), ListSelectActivity.class);
                     intent.putExtra("listElem", new ListElem("Trakt", "trakt-actions", "", "", ""));
@@ -361,7 +375,7 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
         adapter.set(ACTION_PLAY_NOW, new Action(ACTION_PLAY_NOW, getResources()
                 .getString(R.string.play_now)));
         adapter.set(ACTION_PLAY_FROM, new Action(ACTION_PLAY_FROM, getResources().getString(R.string.play_from)));
-        adapter.set(ACTION_PLAY_TRAILER, new Action(ACTION_PLAY_TRAILER, getResources().getString(R.string.play_trailer)));
+//        adapter.set(ACTION_PLAY_TRAILER, new Action(ACTION_PLAY_TRAILER, getResources().getString(R.string.play_trailer)));
         if(Chilly.getInstance(getActivity().getApplicationContext()).userLoggedIn()){
             adapter.set(ACTION_TRAKT, new Action(ACTION_TRAKT, "TRAKT"));
         }
@@ -500,5 +514,51 @@ class SeasonTask extends AsyncTask<String, String, String> {
     // After completing background task Dismiss the progress dialog
     protected void onPostExecute(String file_url) {
         delegate.onGetSeasons(video_list);
+    }
+}
+
+
+interface StreamResponse {
+    void onStreamGrab(List<StreamSource> streams);
+}
+
+
+class StreamTask extends AsyncTask<String, String, String> {
+
+    private final Video mSelectedVideo;
+    StreamResponse delegate;
+    List<StreamSource> streams;
+
+    public StreamTask(StreamResponse del, Video video) {
+        this.mSelectedVideo = video;
+        this.delegate = del;
+    }
+
+    // Before starting background thread Show Progress Dialog
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+    }
+
+    // Checking login in background
+    protected String doInBackground(String... params) {
+
+
+        try {
+            streams = StreamGrabber.getSources(mSelectedVideo);
+        } catch (IOException e) {
+
+        }
+
+        return "";
+
+    }
+
+    // After completing background task Dismiss the progress dialog
+    protected void onPostExecute(String streamurl) {
+        // dismiss the dialog once done
+//        System.out.println(streamurl);
+        delegate.onStreamGrab(streams);
+
     }
 }
