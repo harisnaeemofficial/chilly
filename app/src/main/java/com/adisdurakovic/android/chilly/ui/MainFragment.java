@@ -16,15 +16,9 @@
 
 package com.adisdurakovic.android.chilly.ui;
 
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.LoaderManager;
 import android.content.Context;
-import android.content.CursorLoader;
 import android.content.Intent;
-import android.content.Loader;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -35,7 +29,6 @@ import android.preference.PreferenceManager;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
-import android.support.v17.leanback.widget.CursorObjectAdapter;
 import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.ListRow;
@@ -50,34 +43,20 @@ import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.view.View;
-import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.data.Chilly;
 import com.adisdurakovic.android.chilly.data.ListElem;
-import com.adisdurakovic.android.chilly.data.StreamGrabber;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.adisdurakovic.android.chilly.R;
-import com.adisdurakovic.android.chilly.data.FetchVideoService;
-import com.adisdurakovic.android.chilly.data.VideoContract;
 import com.adisdurakovic.android.chilly.model.Video;
-import com.adisdurakovic.android.chilly.model.VideoCursorMapper;
 import com.adisdurakovic.android.chilly.presenter.CardPresenter;
 import com.adisdurakovic.android.chilly.presenter.GridItemPresenter;
 import com.adisdurakovic.android.chilly.presenter.IconHeaderItemPresenter;
 import com.adisdurakovic.android.chilly.recommendation.UpdateRecommendationsService;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 

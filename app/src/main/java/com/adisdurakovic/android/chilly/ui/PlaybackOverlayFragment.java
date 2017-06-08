@@ -19,18 +19,15 @@ package com.adisdurakovic.android.chilly.ui;
 import static android.support.v4.media.session.MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS;
 import static android.support.v4.media.session.MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS;
 
-import com.adisdurakovic.android.chilly.data.StreamGrabber;
+import com.adisdurakovic.android.chilly.stream.StreamGrabber;
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.util.Util;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.LoaderManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.CursorLoader;
 import android.content.Intent;
-import android.content.Loader;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -46,7 +43,6 @@ import android.os.RemoteException;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.ClassPresenterSelector;
 import android.support.v17.leanback.widget.CursorObjectAdapter;
-import android.support.v17.leanback.widget.HeaderItem;
 import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
@@ -78,7 +74,6 @@ import com.adisdurakovic.android.chilly.model.Video;
 import com.adisdurakovic.android.chilly.model.VideoCursorMapper;
 import com.adisdurakovic.android.chilly.player.ExtractorRendererBuilder;
 import com.adisdurakovic.android.chilly.player.VideoPlayer;
-import com.adisdurakovic.android.chilly.presenter.CardPresenter;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package com.adisdurakovic.android.chilly.data;
+package com.adisdurakovic.android.chilly.stream;
 
 import android.util.Log;
 

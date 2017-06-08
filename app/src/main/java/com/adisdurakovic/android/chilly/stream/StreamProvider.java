@@ -1,4 +1,4 @@
-package com.adisdurakovic.android.chilly.data;
+package com.adisdurakovic.android.chilly.stream;
 
 import com.adisdurakovic.android.chilly.model.Video;
 
@@ -11,7 +11,6 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -203,14 +202,5 @@ public class StreamProvider {
         }
     }
 
-
-
-
-    class StreamSource {
-        public String url;
-        public long quality;
-        public String provider;
-        public String videosource;
-    }
 
 }

@@ -1,23 +1,17 @@
-package com.adisdurakovic.android.chilly.data;
+package com.adisdurakovic.android.chilly.stream;
 
 import android.util.Log;
 
 import com.adisdurakovic.android.chilly.model.Video;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import okhttp3.Request;
 

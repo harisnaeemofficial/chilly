@@ -1,4 +1,4 @@
-package com.adisdurakovic.android.chilly.data;
+package com.adisdurakovic.android.chilly.stream;
 
 import com.adisdurakovic.android.chilly.model.Video;
 
@@ -10,13 +10,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import okio.BufferedSink;
 
 /**
  * Created by add on 22/05/2017.
