@@ -224,9 +224,11 @@ public class Chilly {
 
                     for(int w = 0; w < watched_videos.length(); w++) {
                         JSONObject wm = watched_videos.getJSONObject(w);
-                        if(trakt_elem.optJSONObject("ids").getString("trakt").equals(wm.getJSONObject("movie").getJSONObject("ids").getString("trakt"))) {
+                        if(trakt_elem.getJSONObject("ids").getLong("trakt") == wm.getJSONObject("movie").getJSONObject("ids").getLong("trakt")) {
                             watched = true;
                             break;
+                        } else {
+                            continue;
                         }
                     }
 
@@ -244,15 +246,18 @@ public class Chilly {
 
                     for(int w = 0; w < watched_videos.length(); w++) {
                         JSONObject wm = watched_videos.getJSONObject(w);
-                        if(trakt_elem.getJSONObject("ids").optString("trakt").equals(wm.getJSONObject("show").getJSONObject("ids").getString("trakt"))) {
+                        if(trakt_elem.getJSONObject("ids").getLong("trakt") == wm.getJSONObject("show").getJSONObject("ids").getLong("trakt")) {
                             int watched_episodes = 0;
                             for(int s = 0; s < wm.getJSONArray("seasons").length(); s++) {
                                 JSONObject se = wm.getJSONArray("seasons").getJSONObject(s);
                                 watched_episodes += se.getJSONArray("episodes").length();
                             }
-                            if(watched_episodes == trakt_elem.getLong("aired_episodes")) {
+                            if(watched_episodes > 0 && watched_episodes == trakt_elem.getLong("aired_episodes")) {
                                 watched = true;
+                                break;
                             }
+                        } else {
+                            continue;
                         }
                     }
 
@@ -277,8 +282,12 @@ public class Chilly {
                                         watched = true;
                                         break;
                                     }
+                                } else {
+                                    continue;
                                 }
                             }
+                        } else {
+                            continue;
                         }
                     }
 
@@ -308,14 +317,17 @@ public class Chilly {
                                     JSONObject ee = se.getJSONArray("episodes").getJSONObject(e);
                                     if(ee.getLong("number") == trakt_elem.getLong("number")) {
                                         watched = true;
+
                                         break;
+                                    } else {
+                                        continue;
                                     }
                                 }
                             }
+                        } else {
+                            continue;
                         }
                     }
-
-
                     break;
             }
 

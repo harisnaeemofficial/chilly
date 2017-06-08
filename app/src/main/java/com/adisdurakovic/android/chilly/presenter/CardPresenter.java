@@ -97,7 +97,6 @@ public class CardPresenter extends Presenter {
 
             cardView.setMainImageDimensions(width, height);
             if(video.watched) cardView.setBadgeImage(cardView.getResources().getDrawable(R.drawable.watched_check, null));
-
             Glide.with(cardView.getContext())
                     .load(video.cardImageUrl)
                     .error(mDefaultCardImage)
@@ -110,7 +109,7 @@ public class CardPresenter extends Presenter {
         ImageCardView cardView = (ImageCardView) viewHolder.view;
 
         // Remove references to images so that the garbage collector can free up memory.
-//        cardView.setBadgeImage(null);
+        cardView.setBadgeImage(null);
         cardView.setMainImage(null);
     }
 }
