@@ -304,17 +304,18 @@ public class Chilly {
 
         JSONArray list;
 
-        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
-        urlConnection.setRequestMethod("GET");
-        urlConnection.setRequestProperty("Content-Type","application/json");
+        OkHttpClient client = new OkHttpClient();
 
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer " + getAccessToken())
+                .addHeader("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version))
+                .addHeader("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key))
+                .build();
+        Response response = client.newCall(request).execute();
 
-        urlConnection.setRequestProperty("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version));
-        urlConnection.setRequestProperty("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key));
-        String access_token = getAccessToken();
-        urlConnection.setRequestProperty("Authorization","Bearer " + access_token);
-
-        list = new JSONArray(HTTPGrabber.getContentFromURL(urlConnection));
+        list = new JSONArray(response.body().string());
 
         return list;
     }
@@ -499,11 +500,13 @@ public class Chilly {
 
         JSONObject media = new JSONObject();
 
-        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
-        urlConnection.setRequestMethod("GET");
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder().url(url).build();
+
+
 
         try {
-            media = new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
+            media = new JSONObject(client.newCall(request).execute().body().string());
         } catch (Exception e) {
 
         }
@@ -518,11 +521,12 @@ public class Chilly {
 
         JSONObject media = new JSONObject();
 
-        HttpURLConnection urlConnection = (HttpURLConnection) new java.net.URL(url).openConnection();
-        urlConnection.setRequestMethod("GET");
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder().url(url).build();
+
 
         try {
-            media = new JSONObject(HTTPGrabber.getContentFromURL(urlConnection));
+            media = new JSONObject(client.newCall(request).execute().body().string());
         } catch (Exception e) {
 
         }
