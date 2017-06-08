@@ -45,20 +45,15 @@ public class Stream_sezonlukdizi extends StreamProvider {
 
             Elements id_elems = null;
 
-            for(int i = 1; i <= 3; i++) {
-                request = new Request.Builder()
-                        .url(url)
-                        .addHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
-                        .build();
-                response = client.newCall(request).execute();
-                String res = response.body().string();
-                Log.d(TAG, "res: " + res);
-                Document doc = Jsoup.parse(res);
-                Log.d(TAG, "try " + i + ": " + response.request().url());
+            request = new Request.Builder()
+                    .url(url)
+                    .addHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
+                    .build();
+            response = client.newCall(request).execute();
+            String res = response.body().string();
+            Document doc = Jsoup.parse(res);
 
-                id_elems = doc.select("div.mediv[data-id]");
-                if(id_elems.size() > 0) break;
-            }
+            id_elems = doc.select("div.item[data-id]");
 
 
             if(id_elems == null) return list;
