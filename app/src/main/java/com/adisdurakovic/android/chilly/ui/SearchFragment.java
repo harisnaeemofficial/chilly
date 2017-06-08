@@ -18,6 +18,7 @@ package com.adisdurakovic.android.chilly.ui;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -25,7 +26,9 @@ import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
@@ -43,29 +46,41 @@ import android.support.v17.leanback.widget.SpeechRecognitionCallback;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.BuildConfig;
 import com.adisdurakovic.android.chilly.R;
+import com.adisdurakovic.android.chilly.data.Chilly;
 import com.adisdurakovic.android.chilly.data.VideoContract;
 import com.adisdurakovic.android.chilly.model.Video;
 import com.adisdurakovic.android.chilly.model.VideoCursorMapper;
 import com.adisdurakovic.android.chilly.presenter.CardPresenter;
 
+import java.util.List;
+
 /*
  * This class demonstrates how to do in-app search
  */
 public class SearchFragment extends android.support.v17.leanback.app.SearchFragment
-        implements android.support.v17.leanback.app.SearchFragment.SearchResultProvider,
-        LoaderManager.LoaderCallbacks<Cursor> {
+        implements android.support.v17.leanback.app.SearchFragment.SearchResultProvider, SearchLoaderResponse {
     private static final String TAG = "SearchFragment";
     private static final boolean DEBUG = BuildConfig.DEBUG;
     private static final boolean FINISH_ON_RECOGNIZER_CANCELED = true;
     private static final int REQUEST_SPEECH = 0x00000010;
+    private SpinnerFragment mSpinnerFragment;
 
     private final Handler mHandler = new Handler();
     private ArrayObjectAdapter mRowsAdapter;
     private String mQuery;
+    private final ArrayObjectAdapter mVideoAdapter =
+            new ArrayObjectAdapter(new CardPresenter());
+
     private final CursorObjectAdapter mVideoCursorAdapter =
             new CursorObjectAdapter(new CardPresenter());
 
@@ -75,10 +90,9 @@ public class SearchFragment extends android.support.v17.leanback.app.SearchFragm
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        mSpinnerFragment = new SpinnerFragment();
         mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
         mVideoCursorAdapter.setMapper(new VideoCursorMapper());
-
         setSearchResultProvider(this);
         setOnItemViewClickedListener(new ItemViewClickedListener());
         if (DEBUG) {
@@ -114,6 +128,16 @@ public class SearchFragment extends android.support.v17.leanback.app.SearchFragm
     }
 
     @Override
+    public void onSearchFinish(List<Video> found_videos) {
+//        getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
+        HeaderItem header = new HeaderItem("Results");
+        mRowsAdapter.clear();
+        mVideoAdapter.addAll(mVideoAdapter.size(), found_videos);
+        ListRow row = new ListRow(header, mVideoAdapter);
+        mRowsAdapter.add(row);
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case REQUEST_SPEECH:
@@ -142,15 +166,17 @@ public class SearchFragment extends android.support.v17.leanback.app.SearchFragm
 
     @Override
     public boolean onQueryTextChange(String newQuery) {
-        if (DEBUG) Log.i(TAG, String.format("Search text changed: %s", newQuery));
-        loadQuery(newQuery);
+//        if (DEBUG) Log.i(TAG, String.format("Search text changed: %s", newQuery));
+//        loadQuery(newQuery);
         return true;
     }
 
     @Override
     public boolean onQueryTextSubmit(String query) {
         if (DEBUG) Log.i(TAG, String.format("Search text submitted: %s", query));
-        loadQuery(query);
+//        loadQuery(query);
+//        getFragmentManager().beginTransaction().add(R.id.search_fragment, mSpinnerFragment).commit();
+        new SearchLoaderTask(getActivity().getApplicationContext(), this, query).execute();
         return true;
     }
 
@@ -167,7 +193,7 @@ public class SearchFragment extends android.support.v17.leanback.app.SearchFragm
     private void loadQuery(String query) {
         if (!TextUtils.isEmpty(query) && !query.equals("nil")) {
             mQuery = query;
-            getLoaderManager().initLoader(mSearchLoaderId++, null, this);
+//            getLoaderManager().initLoader(mSearchLoaderId++, null, this);
         }
     }
 
@@ -175,42 +201,42 @@ public class SearchFragment extends android.support.v17.leanback.app.SearchFragm
         getView().findViewById(R.id.lb_search_bar).requestFocus();
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String query = mQuery;
-        return new CursorLoader(
-                getActivity(),
-                VideoContract.VideoEntry.CONTENT_URI,
-                null, // Return all fields.
-                VideoContract.VideoEntry.COLUMN_NAME + " LIKE ? OR " +
-                        VideoContract.VideoEntry.COLUMN_DESC + " LIKE ?",
-                new String[]{"%" + query + "%", "%" + query + "%"},
-                null // Default sort order
-        );
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        int titleRes;
-        if (cursor != null && cursor.moveToFirst()) {
-            mResultsFound = true;
-            titleRes = R.string.search_results;
-        } else {
-            mResultsFound = false;
-            titleRes = R.string.no_search_results;
-        }
-        mVideoCursorAdapter.changeCursor(cursor);
-        HeaderItem header = new HeaderItem(getString(titleRes, mQuery));
-        mRowsAdapter.clear();
-        ListRow row = new ListRow(header, mVideoCursorAdapter);
-        mRowsAdapter.add(row);
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        mVideoCursorAdapter.changeCursor(null);
-    }
-
+//    @Override
+//    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+//        String query = mQuery;
+//        return new CursorLoader(
+//                getActivity(),
+//                VideoContract.VideoEntry.CONTENT_URI,
+//                null, // Return all fields.
+//                VideoContract.VideoEntry.COLUMN_NAME + " LIKE ? OR " +
+//                        VideoContract.VideoEntry.COLUMN_DESC + " LIKE ?",
+//                new String[]{"%" + query + "%", "%" + query + "%"},
+//                null // Default sort order
+//        );
+//    }
+//
+//    @Override
+//    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+//        int titleRes;
+//        if (cursor != null && cursor.moveToFirst()) {
+//            mResultsFound = true;
+//            titleRes = R.string.search_results;
+//        } else {
+//            mResultsFound = false;
+//            titleRes = R.string.no_search_results;
+//        }
+//        mVideoCursorAdapter.changeCursor(cursor);
+//        HeaderItem header = new HeaderItem(getString(titleRes, mQuery));
+//        mRowsAdapter.clear();
+//        ListRow row = new ListRow(header, mVideoCursorAdapter);
+//        mRowsAdapter.add(row);
+//    }
+//
+//    @Override
+//    public void onLoaderReset(Loader<Cursor> loader) {
+//        mVideoCursorAdapter.changeCursor(null);
+//    }
+//
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
         @Override
         public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
@@ -232,4 +258,64 @@ public class SearchFragment extends android.support.v17.leanback.app.SearchFragm
         }
     }
 
+    public static class SpinnerFragment extends Fragment {
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            ProgressBar progressBar = new ProgressBar(container.getContext());
+            if (container instanceof FrameLayout) {
+                Resources res = getResources();
+                int width = res.getDimensionPixelSize(R.dimen.spinner_width);
+                int height = res.getDimensionPixelSize(R.dimen.spinner_height);
+                FrameLayout.LayoutParams layoutParams =
+                        new FrameLayout.LayoutParams(width, height, Gravity.CENTER);
+                progressBar.setLayoutParams(layoutParams);
+            }
+            return progressBar;
+        }
+    }
+
+}
+
+
+interface SearchLoaderResponse {
+    void onSearchFinish(List<Video> found_videos);
+}
+
+
+// Background ASYNC Task to login by making HTTP Request
+class SearchLoaderTask extends AsyncTask<String, String, String> {
+
+    List<Video> found_items;
+    SearchLoaderResponse delegate = null;
+    Context ctx;
+    String query = "";
+
+    public SearchLoaderTask(Context ctx, SearchLoaderResponse del, String q) {
+        this.delegate = del;
+        this.ctx = ctx;
+        this.query = q;
+    }
+
+    // Before starting background thread Show Progress Dialog
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+//        Toast.makeText(activity, "Loading...", Toast.LENGTH_SHORT).show();
+    }
+
+    // Checking login in background
+    protected String doInBackground(String... params) {
+
+        found_items = Chilly.getInstance(ctx).getBySearch(query);
+
+        return "";
+
+    }
+
+    // After completing background task Dismiss the progress dialog
+    protected void onPostExecute(String file_url) {
+        delegate.onSearchFinish(found_items);
+
+    }
 }

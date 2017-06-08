@@ -184,6 +184,20 @@ public class Chilly {
         return list;
     }
 
+    public List<Video> getBySearch(String query) {
+        List<Video> list = new ArrayList<>();
+        if(query.equals("")) return list;
+        try {
+            String trakt_url = mContext.getResources().getString(R.string.trakt_api_url) + "/search/movie?extended=full&limit=100&query=" + query;
+            list.addAll(getVideos("movie", trakt_url));
+            trakt_url = mContext.getResources().getString(R.string.trakt_api_url) + "/search/show?extended=full&limit=100&query=" + query;
+            list.addAll(getVideos("show", trakt_url));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
 
     private List<Video> getVideos(String type, String trakt_list_url) throws JSONException, IOException {
 
@@ -452,7 +466,6 @@ public class Chilly {
     }
 
     public void addToTrakt(String where, Video video) {
-        System.out.println("ADD To T");
         String url = mContext.getResources().getString(R.string.trakt_api_url) + "/sync/" + where;
         OkHttpClient client = new OkHttpClient();
 
