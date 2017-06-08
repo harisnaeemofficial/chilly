@@ -41,6 +41,15 @@ public class ListElem implements Parcelable {
         this.video = v;
     }
 
+    public ListElem(String t, String s, String a, Video v) {
+        this.title = t;
+        this.slug = s;
+        this.videoType = "";
+        this.action = a;
+        this.filterType = "";
+        this.video = v;
+    }
+
     public ListElem(Parcel in) {
         title = in.readString();
         slug = in.readString();

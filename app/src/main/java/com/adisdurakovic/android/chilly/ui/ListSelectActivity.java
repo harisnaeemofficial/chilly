@@ -33,6 +33,8 @@ import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.data.Chilly;
 import com.adisdurakovic.android.chilly.data.ListElem;
 import com.adisdurakovic.android.chilly.model.Video;
+import com.adisdurakovic.android.chilly.stream.StreamGrabber;
+import com.adisdurakovic.android.chilly.stream.StreamSource;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -58,6 +60,7 @@ public class ListSelectActivity extends Activity implements ListResponse {
     private static String title = "";
     private static String subtitle = "";
     private static Video video = null;
+    private static List<String> src_list = new ArrayList<>();
 
     private static final String[] MOVIE_LISTS_INTENTVARS = {
             "movies_trending",
@@ -129,7 +132,12 @@ public class ListSelectActivity extends Activity implements ListResponse {
             long x = 0;
             for(Iterator<ListElem> i = lists.iterator(); i.hasNext();) {
                 ListElem elem = i.next();
-                addAction(actions, x, elem.title, "");
+                if(elem.slug.equals("play-video")) {
+                    addAction(actions, x, elem.title, "Stream: " + elem.action);
+                    src_list.add(elem.videoType);
+                } else {
+                    addAction(actions, x, elem.title, "");
+                }
                 x++;
             }
 
@@ -153,6 +161,14 @@ public class ListSelectActivity extends Activity implements ListResponse {
                     new TraktTask(getActivity().getApplicationContext(), "mark-as-watched", video).execute();
                     Toast.makeText(getActivity(), "DONE!", Toast.LENGTH_SHORT).show();
                 }
+            } else if(action.getDescription().toString().contains("Stream: ")) {
+                if(src_list.size() > 0) {
+                    video.videoUrl = src_list.get((int) action.getId());
+                    Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
+                    intent.putExtra(VideoDetailsActivity.VIDEO, video);
+                    startActivity(intent);
+                }
+
             } else {
                 Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
                 int intid = (int) action.getId();
@@ -215,7 +231,20 @@ class ListTask extends AsyncTask<String, String, String> {
                 case "trakt-actions":
                     list = Chilly.getInstance(ctx).getTraktActions(item.videoType, item.video);
                     title = "TRAKT";
-                    subtitle = "Perform a Trakt-action";
+                    subtitle = "Perform a Trakt-action.";
+                    break;
+                case "get-sources":
+                    List<StreamSource> source_list = StreamGrabber.getSources(item.video);
+
+                    for(StreamSource s : source_list) {
+                        item.video.videoUrl = s.url;
+                        ListElem le = new ListElem(s.quality + "P", "play-video",s.url, s.provider, "");
+                        list.add(le);
+                    }
+                    title = "PLAY FROM";
+                    subtitle = "Select a stream provider to play from.";
+                    break;
+
 
             }
 

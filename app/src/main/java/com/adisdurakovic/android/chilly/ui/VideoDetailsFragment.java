@@ -131,12 +131,10 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
 
     @Override
     public void onStreamGrab(List<StreamSource> sources) {
-//        Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
-//        intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
-//        startActivity(intent);
-        for(StreamSource s : sources) {
-            Log.d("SS", s.quality + "-" +  s.provider);
-        }
+        mSelectedVideo.videoUrl = sources.get(0).url;
+        Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
+        intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
+        startActivity(intent);
     }
 
     @Override
@@ -218,10 +216,13 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
             @Override
             public void onActionClicked(Action action) {
                 if (action.getId() == ACTION_PLAY_NOW) {
-//                    Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
-//                    intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
-//                    startActivity(intent);
                     new StreamTask(mFragment, mSelectedVideo).execute();
+                } else if (action.getId() == ACTION_PLAY_FROM) {
+                    Intent intent = new Intent(getActivity(), ListSelectActivity.class);
+                    ListElem le = new ListElem("Trakt", "get-sources", mSelectedVideo);
+                    intent.putExtra("listElem", le);
+                    Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity()).toBundle();
+                    startActivity(intent, bundle);
                 } else if (action.getId() == ACTION_TRAKT) {
                     Intent intent = new Intent(getActivity(), ListSelectActivity.class);
                     ListElem le = new ListElem("Trakt", "trakt-actions", mSelectedVideo);
