@@ -2,24 +2,20 @@ package com.adisdurakovic.android.chilly.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.os.AsyncTask;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.adisdurakovic.android.chilly.R;
+import com.adisdurakovic.android.chilly.model.TraktGson;
 import com.adisdurakovic.android.chilly.model.Video;
-import com.bumptech.glide.disklrucache.DiskLruCache;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,9 +26,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okio.BufferedSink;
 
-import static android.os.Environment.isExternalStorageRemovable;
 
 /**
  * Created by add on 21/05/2017.
@@ -44,7 +38,8 @@ public class Chilly {
     private Video tvshow;
     private Video season;
     private int page;
-    private String TAG = "CHILLY";
+    private final String TAG = "CHILLY";
+    private final Gson gson = new GsonBuilder().serializeNulls().create();
 
     private Chilly(Context ctx) {
         mContext = ctx;
@@ -209,14 +204,15 @@ public class Chilly {
 
         String watchtype = (type.equals("movie") ? "movies" : "shows");
         JSONArray watched_videos = getWatched(watchtype);
+        TraktGson.TraktWatched[] watched_gson = gson.fromJson(watched_videos.toString(), TraktGson.TraktWatched[].class);
 
         for(int i = 0; i < data_list.length(); i++) {
 
             JSONObject trakt_elem = null;
             String fanart_url, tmdb_url = "";
             JSONObject fanart_media, tmdb_media;
-            String poster = "";
-            String background = "";
+            String poster = "https://storage.googleapis.com/android-tv/Sample%20videos/Google%2B/Google%2B_%20Instant%20Upload/card.jpg";
+            String background = "https://storage.googleapis.com/android-tv/Sample%20videos/Google%2B/Google%2B_%20Instant%20Upload/bg.jpg";
             String year = "";
 
             String seasonNumber = "";
@@ -226,120 +222,105 @@ public class Chilly {
 
             switch (type) {
                 case "movie":
-                    trakt_elem = data_list.optJSONObject(i).optJSONObject("movie");
-                    if(trakt_elem == null) {
-                        trakt_elem = data_list.optJSONObject(i);
-                    }
-                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + trakt_elem.getJSONObject("ids").getString("tmdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);;
-                    fanart_media = getDataFromFanart(fanart_url);
-                    poster = getPoster(fanart_media, "movieposter", "", "");
-                    background = getBackground(fanart_media, "moviebackground");
-                    year = trakt_elem.optString("year");
+                    trakt_elem = data_list.optJSONObject(i).optJSONObject("movie") != null ? data_list.optJSONObject(i).optJSONObject("movie") : data_list.optJSONObject(i);
+                    TraktGson.TraktMovie tMovie = gson.fromJson(trakt_elem.toString(), TraktGson.TraktMovie.class);
 
-                    for(int w = 0; w < watched_videos.length(); w++) {
-                        JSONObject wm = watched_videos.getJSONObject(w);
-                        if(trakt_elem.getJSONObject("ids").getLong("trakt") == wm.getJSONObject("movie").getJSONObject("ids").getLong("trakt")) {
-                            watched = true;
-                            break;
-                        } else {
-                            continue;
-                        }
+//                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + trakt_elem.getJSONObject("ids").getString("tmdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);;
+//                    fanart_media = getDataFromFanart(fanart_url);
+//                    poster = getPoster(fanart_media, "movieposter", "", "");
+//                    background = getBackground(fanart_media, "moviebackground");
+                    year = String.valueOf(tMovie.year);
+
+
+                    for(TraktGson.TraktWatched tw : watched_gson) {
+                        if(!tw.movie.ids.get("trakt").equals(tMovie.ids.get("trakt"))) continue;
+                        watched = true; break;
                     }
 
                     break;
                 case "show":
-                    trakt_elem = data_list.optJSONObject(i).optJSONObject("show");
-                    if(trakt_elem == null) {
-                        trakt_elem = data_list.optJSONObject(i);
-                    }
-                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + trakt_elem.optJSONObject("ids").optString("tvdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);;
-                    fanart_media = getDataFromFanart(fanart_url);
-                    poster = getPoster(fanart_media, "tvposter", "", "");
-                    background = getBackground(fanart_media, "showbackground");
-                    year = trakt_elem.optString("year");
+                    trakt_elem = data_list.optJSONObject(i).optJSONObject("show") != null ? data_list.optJSONObject(i).optJSONObject("show") : data_list.optJSONObject(i);
+                    TraktGson.TraktShow tShow = gson.fromJson(trakt_elem.toString(), TraktGson.TraktShow.class);
+//                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + trakt_elem.optJSONObject("ids").optString("tvdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);;
+//                    fanart_media = getDataFromFanart(fanart_url);
+//                    poster = getPoster(fanart_media, "tvposter", "", "");
+//                    background = getBackground(fanart_media, "showbackground");
+                    year = String.valueOf(tShow.year);
 
-                    for(int w = 0; w < watched_videos.length(); w++) {
-                        JSONObject wm = watched_videos.getJSONObject(w);
-                        if(trakt_elem.getJSONObject("ids").getLong("trakt") == wm.getJSONObject("show").getJSONObject("ids").getLong("trakt")) {
-                            int watched_episodes = 0;
-                            for(int s = 0; s < wm.getJSONArray("seasons").length(); s++) {
-                                JSONObject se = wm.getJSONArray("seasons").getJSONObject(s);
-                                watched_episodes += se.getJSONArray("episodes").length();
-                            }
-                            if(watched_episodes > 0 && watched_episodes == trakt_elem.getLong("aired_episodes")) {
-                                watched = true;
-                                break;
-                            }
-                        } else {
-                            continue;
+//                    for(int w = 0; w < watched_videos.length(); w++) {
+//                        JSONObject wm = watched_videos.getJSONObject(w);
+//                        if(trakt_elem.getJSONObject("ids").getLong("trakt") == wm.getJSONObject("show").getJSONObject("ids").getLong("trakt")) {
+//                            int watched_episodes = 0;
+//                            for(int s = 0; s < wm.getJSONArray("seasons").length(); s++) {
+//                                JSONObject se = wm.getJSONArray("seasons").getJSONObject(s);
+//                                watched_episodes += se.getJSONArray("episodes").length();
+//                            }
+//                            if(watched_episodes > 0 && watched_episodes == trakt_elem.getLong("aired_episodes")) {
+//                                watched = true;
+//                                break;
+//                            }
+//                        } else {
+//                            continue;
+//                        }
+//                    }
+
+                    for(TraktGson.TraktWatched tw : watched_gson) {
+                        if(!tw.show.ids.get("trakt").equals(tShow.ids.get("trakt"))) continue;
+                        int watched_episodes = 0;
+                        for(TraktGson.TraktWatchedSeason tws : tw.seasons) {
+                            watched_episodes += tws.episodes.size();
                         }
+                        if(watched_episodes == tShow.aired_episodes) watched = true; break;
                     }
+
 
                     break;
                 case "season":
                     trakt_elem = data_list.optJSONObject(i);
-                    if(trakt_elem.optString("number").equals("0")) continue;
-                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
-                    fanart_media = getDataFromFanart(fanart_url);
-                    poster = getPoster(fanart_media, "seasonposter", "tvposter", trakt_elem.optString("number"));
-                    background = getBackground(fanart_media, "showbackground");
-                    year = trakt_elem.optString("first_aired").substring(0, 4);
+                    TraktGson.TraktSeason tSeason = gson.fromJson(trakt_elem.toString(), TraktGson.TraktSeason.class);
+                    if(tSeason.number == 0) continue;
+//                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+//                    fanart_media = getDataFromFanart(fanart_url);
+//                    poster = getPoster(fanart_media, "seasonposter", "tvposter", trakt_elem.optString("number"));
+//                    background = getBackground(fanart_media, "showbackground");
+                    year = String.valueOf(tSeason.first_aired).substring(0, 4);
 
 
-                    for(int w = 0; w < watched_videos.length(); w++) {
-                        JSONObject wm = watched_videos.getJSONObject(w);
-                        if(tvshow.id == wm.getJSONObject("show").getJSONObject("ids").getLong("trakt")) {
-                            for(int s = 0; s < wm.getJSONArray("seasons").length(); s++) {
-                                JSONObject se = wm.getJSONArray("seasons").getJSONObject(s);
-                                if(se.getLong("number") == trakt_elem.getLong("number")) {
-                                    if(trakt_elem.getLong("aired_episodes") == se.getJSONArray("episodes").length()) {
-                                        watched = true;
-                                        break;
-                                    }
-                                } else {
-                                    continue;
-                                }
-                            }
-                        } else {
-                            continue;
+                    for(TraktGson.TraktWatched tw : watched_gson) {
+                        if(!tw.show.ids.get("trakt").equals(String.valueOf(tvshow.id))) continue;
+                        for(TraktGson.TraktWatchedSeason tws : tw.seasons) {
+                            if(tws.number != tSeason.number) continue;
+                            if(tSeason.aired_episodes == tws.episodes.size()) watched = true; break;
                         }
                     }
+
 
 
                     break;
                 case "episode":
                     trakt_elem = data_list.optJSONObject(i);
+                    TraktGson.TraktEpisode tEpisode = gson.fromJson(trakt_elem.toString(), TraktGson.TraktEpisode.class);
                     if(trakt_elem.optString("number").equals("0")) continue;
-                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
-                    fanart_media = getDataFromFanart(fanart_url);
-                    tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/tv/" + tvshow.tmdb_id + "/season/" + trakt_elem.optString("season") + "/episode/" + trakt_elem.optString("number") + "/images?language=en-US&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key);;
-                    tmdb_media = getDataFromTMDB(tmdb_url);
-                    poster = mContext.getResources().getString(R.string.tmdb_image_url) + tmdb_media.optJSONArray("stills").optJSONObject(0).optString("file_path");
-                    background = getBackground(fanart_media, "showbackground");
+//                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+//                    fanart_media = getDataFromFanart(fanart_url);
+//                    tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/tv/" + tvshow.tmdb_id + "/season/" + trakt_elem.optString("season") + "/episode/" + trakt_elem.optString("number") + "/images?language=en-US&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key);;
+//                    tmdb_media = getDataFromTMDB(tmdb_url);
+//                    poster = mContext.getResources().getString(R.string.tmdb_image_url) + tmdb_media.optJSONArray("stills").optJSONObject(0).optString("file_path");
+//                    background = getBackground(fanart_media, "showbackground");
                     year = "S" + zeroAppended(trakt_elem.optString("season")) + "E" + zeroAppended(trakt_elem.optString("number"));
                     seasonNumber = trakt_elem.getString("season");
                     episodeNumber = trakt_elem.getString("number");
 
 
-                    for(int w = 0; w < watched_videos.length(); w++) {
-                        JSONObject wm = watched_videos.getJSONObject(w);
-                        if(tvshow.id == wm.getJSONObject("show").getJSONObject("ids").getLong("trakt")) {
-                            for(int s = 0; s < wm.getJSONArray("seasons").length(); s++) {
-                                JSONObject se = wm.getJSONArray("seasons").getJSONObject(s);
-                                if(!se.getString("number").equals(seasonNumber)) continue;
-                                for(int e = 0; e < se.getJSONArray("episodes").length(); e++) {
-                                    JSONObject ee = se.getJSONArray("episodes").getJSONObject(e);
-                                    if(ee.getLong("number") == trakt_elem.getLong("number")) {
-                                        watched = true;
-
-                                        break;
-                                    } else {
-                                        continue;
-                                    }
-                                }
+                    for(TraktGson.TraktWatched tw : watched_gson) {
+                        if(!tw.show.ids.get("trakt").equals(String.valueOf(tvshow.id))) continue;
+                        for(TraktGson.TraktWatchedSeason tws : tw.seasons) {
+                            if(tws.number != tEpisode.season) continue;
+                            for(TraktGson.TraktWatchedEpisode twe : tws.episodes) {
+                                if(tEpisode.number != twe.number) continue;
+                                watched = true;
+                                break;
                             }
-                        } else {
-                            continue;
                         }
                     }
                     break;
@@ -500,13 +481,11 @@ public class Chilly {
             ex.printStackTrace();
         }
 
-        System.out.println(v);
 
 
     }
 
     public void markAsWatched(Video video) {
-        System.out.println("ADD To T");
         String url = mContext.getResources().getString(R.string.trakt_api_url) + "/scrobble/start";
         OkHttpClient client = new OkHttpClient();
 
@@ -558,7 +537,6 @@ public class Chilly {
             ex.printStackTrace();
         }
 
-        System.out.println(v);
 
 
     }
