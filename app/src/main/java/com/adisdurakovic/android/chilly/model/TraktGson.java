@@ -21,6 +21,7 @@ public class TraktGson {
         public double rating;
         public List<String> genres;
         public String language;
+        public boolean watched;
 
         @Override
         public String toString() {
@@ -51,8 +52,7 @@ public class TraktGson {
     public class TraktEpisode extends TraktElem {
         public long season;
         public long number;
-        public long episode_count;
-        public long aired_episodes;
+        public String first_aired;
     }
 
     public class TraktWatchedElem {

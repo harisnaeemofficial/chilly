@@ -45,7 +45,7 @@ public final class Video implements Parcelable {
     public final String episodeNumber;
     public final Video episodeShow;
     public final long runtime;
-    public final long rating;
+    public final double rating;
     public final String trailer;
     public final boolean watched;
 
@@ -68,7 +68,7 @@ public final class Video implements Parcelable {
             final String episodeNumber,
             final Video episodeShow,
             final long runtime,
-            final long rating,
+            final double rating,
             final String trailer,
             final boolean watched
             ) {
@@ -112,7 +112,7 @@ public final class Video implements Parcelable {
         episodeNumber = in.readString();
         episodeShow = in.readParcelable(Video.class.getClassLoader());
         runtime = in.readLong();
-        rating = in.readLong();
+        rating = in.readDouble();
         trailer = in.readString();
         watched = in.readByte() != 0;
     }
@@ -157,7 +157,7 @@ public final class Video implements Parcelable {
         dest.writeString(episodeNumber);
         dest.writeParcelable(episodeShow, flags);
         dest.writeLong(runtime);
-        dest.writeLong(rating);
+        dest.writeDouble(rating);
         dest.writeString(trailer);
         dest.writeByte(((byte)(watched? 1 : 0)));
     }
@@ -214,7 +214,7 @@ public final class Video implements Parcelable {
         private String episodeNumber;
         private Video episodeShow;
         public long runtime;
-        public long rating;
+        public double rating;
         private String trailer;
         private boolean watched;
 
@@ -304,7 +304,7 @@ public final class Video implements Parcelable {
             return this;
         }
 
-        public VideoBuilder rating(long rating) {
+        public VideoBuilder rating(double rating) {
             this.rating = rating;
             return this;
         }
