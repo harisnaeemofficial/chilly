@@ -6,6 +6,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.adisdurakovic.android.chilly.R;
+import com.adisdurakovic.android.chilly.model.FanartGson;
+import com.adisdurakovic.android.chilly.model.TMDBGson;
 import com.adisdurakovic.android.chilly.model.TraktGson;
 import com.adisdurakovic.android.chilly.model.Video;
 import com.google.gson.Gson;
@@ -15,12 +17,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import okhttp3.Cache;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -40,6 +47,9 @@ public class Chilly {
     private int page;
     private final String TAG = "CHILLY";
     private final Gson gson = new GsonBuilder().serializeNulls().create();
+    Video elem = new Video.VideoBuilder().build();
+
+    private Map<String, String> posters = new HashMap<>();
 
     private Chilly(Context ctx) {
         mContext = ctx;
@@ -211,8 +221,6 @@ public class Chilly {
             JSONObject trakt_object = null;
             String fanart_url, tmdb_url = "";
             JSONObject fanart_media, tmdb_media;
-            String poster = "https://storage.googleapis.com/android-tv/Sample%20videos/Google%2B/Google%2B_%20Instant%20Upload/card.jpg";
-            String background = "https://storage.googleapis.com/android-tv/Sample%20videos/Google%2B/Google%2B_%20Instant%20Upload/bg.jpg";
 
             Video elem = null;
 
@@ -223,7 +231,7 @@ public class Chilly {
                     TraktGson.TraktMovie tMovie = gson.fromJson(trakt_object.toString(), TraktGson.TraktMovie.class);
 
 
-//                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + trakt_elem.getJSONObject("ids").getString("tmdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);;
+//                    fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + trakt_elem.getJSONObject("ids").getString("tmdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
 //                    fanart_media = getDataFromFanart(fanart_url);
 //                    poster = getPoster(fanart_media, "movieposter", "", "");
 //                    background = getBackground(fanart_media, "moviebackground");
@@ -348,6 +356,8 @@ public class Chilly {
         return buildCommon(t)
                 .videoType("movie")
                 .productionYear(String.valueOf(t.year))
+                .cardImageUrl(getFanartPoster(t, "movie"))
+//                .bgImageUrl(getTMDBImage(t, "movie", "backdrop"))
                 .build();
     }
 
@@ -357,6 +367,7 @@ public class Chilly {
                 .studio(t.network)
                 .videoType("show")
                 .productionYear(String.valueOf(t.year))
+                .cardImageUrl(getFanartPoster(t, "show"))
                 .build();
     }
 
@@ -364,6 +375,7 @@ public class Chilly {
         return buildCommon(t)
                 .airedEpisodes(t.aired_episodes)
                 .videoType("season")
+                .cardImageUrl(getFanartPoster(t, "season"))
                 .productionYear(String.valueOf(t.first_aired).substring(0, 4))
                 .build();
     }
@@ -386,13 +398,129 @@ public class Chilly {
             .imdb_id(t.ids.get("imdb"))
             .title(t.title)
             .description(t.overview)
-            .cardImageUrl("https://storage.googleapis.com/android-tv/Sample%20videos/Google%2B/Google%2B_%20Instant%20Upload/card.jpg")
-            .bgImageUrl("https://storage.googleapis.com/android-tv/Sample%20videos/Google%2B/Google%2B_%20Instant%20Upload/bg.jpg")
+            .cardImageUrl("http://some.fake/image/load.jpg")
+            .bgImageUrl("http://some.fake/image/load.jpg")
             .videoUrl("")
             .runtime(t.runtime)
             .rating(t.rating)
             .trailer(t.trailer)
             .watched(t.watched);
+    }
+
+
+    public String getTMDBImage(TraktGson.TraktElem t, String videoType, String imageType) {
+
+        String tmdb_url = "";
+        String img_url = "";
+
+        switch (videoType) {
+            case "movie":
+                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/movie/" + t.ids.get("tmdb") + "/images?language=en&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key); break;
+            case "show":
+                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/tv/" + t.ids.get("tmdb") + "/images?language=en&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key); break;
+//            case "season":
+//                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/movie/" + tvshow.tmdb_id + "/season/" + season.seasonNumber + "/images?language=en-US";
+
+        }
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder().url(tmdb_url).build();
+        try {
+            TMDBGson.TMDBElem tmdbElem = gson.fromJson(client.newCall(request).execute().body().string(), TMDBGson.TMDBElem.class);
+            switch (imageType) {
+                case "poster":
+                    return mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.posters.get(0).file_path;
+                case "backdrop":
+                    return mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.backdrops.get(0).file_path;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return img_url;
+
+    }
+
+
+    public String getFanartPoster(TraktGson.TraktElem t, String videoType) {
+        String poster = "TEST";
+        String fanart_url = "";
+        switch(videoType) {
+            case "movie":
+                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + t.ids.get("tmdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+                break;
+            case "show":
+                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + t.ids.get("tvdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+                break;
+            case "season":
+                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+                break;
+        }
+
+
+
+
+        int cacheSize = 50 * 1024 * 1024; // 50 MiB
+        Cache cache = new Cache(new File(mContext.getCacheDir().getPath()), cacheSize);
+
+        OkHttpClient client = new OkHttpClient.Builder().cache(cache).readTimeout(1, TimeUnit.SECONDS).build();
+
+        Request request = new Request.Builder().url(fanart_url).build();
+
+
+
+
+        try {
+            Response response = client.newCall(request).execute();
+            System.out.println(response.cacheResponse());
+            FanartGson.FanartElem fanartElem = gson.fromJson(response.body().string(), FanartGson.FanartElem.class);
+            switch(videoType) {
+                case "movie":
+                    for(FanartGson.FanartData f : fanartElem.movieposter) {
+                        if(!f.lang.equals("00")) {
+                            poster = f.url;
+                        }
+                        if(f.lang.equals("en")) {
+                            poster = f.url;
+                            break;
+                        }
+                    }
+                    break;
+                case "show":
+                    for(FanartGson.FanartData f : fanartElem.tvposter) {
+                        if(!f.lang.equals("00")) {
+                            poster = f.url;
+                        }
+                        if(f.lang.equals("en")) {
+                            poster = f.url;
+                            break;
+                        }
+                    }
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        poster = poster.replace("/fanart/", "/preview/");
+        return poster;
+
+    }
+
+
+    private JSONObject getDataFromFanart(String url) {
+
+
+        JSONObject media = new JSONObject();
+
+
+
+//        try {
+//            media = new JSONObject(client.newCall(request).execute().body().string());
+//        } catch (Exception e) {
+//
+//        }
+
+
+        return media;
     }
 
 
@@ -718,24 +846,7 @@ public class Chilly {
         return background;
     }
 
-    private JSONObject getDataFromFanart(String url) throws IOException, JSONException {
 
-        JSONObject media = new JSONObject();
-
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder().url(url).build();
-
-
-
-        try {
-            media = new JSONObject(client.newCall(request).execute().body().string());
-        } catch (Exception e) {
-
-        }
-
-
-        return media;
-    }
 
 
 
