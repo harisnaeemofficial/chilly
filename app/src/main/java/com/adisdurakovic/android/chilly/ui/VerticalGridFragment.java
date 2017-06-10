@@ -178,6 +178,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
 
             if (item instanceof Video) {
                 Video video = (Video) item;
+                ((Video) item).cardImageUrl = "http://assets.fanart.tv/fanart/movies/920/movieposter/cars-5214d18d6721b.jpg";
 
                 Intent intent = new Intent(getActivity(), VideoDetailsActivity.class);
                 intent.putExtra(VideoDetailsActivity.VIDEO, video);

@@ -356,7 +356,7 @@ public class Chilly {
         return buildCommon(t)
                 .videoType("movie")
                 .productionYear(String.valueOf(t.year))
-                .cardImageUrl(getFanartPoster(t, "movie"))
+//                .cardImageUrl(getFanartPoster(t, "movie"))
 //                .bgImageUrl(getTMDBImage(t, "movie", "backdrop"))
                 .build();
     }
@@ -367,7 +367,7 @@ public class Chilly {
                 .studio(t.network)
                 .videoType("show")
                 .productionYear(String.valueOf(t.year))
-                .cardImageUrl(getFanartPoster(t, "show"))
+//                .cardImageUrl(getFanartPoster(t, "show"))
                 .build();
     }
 
@@ -398,7 +398,7 @@ public class Chilly {
             .imdb_id(t.ids.get("imdb"))
             .title(t.title)
             .description(t.overview)
-            .cardImageUrl("http://some.fake/image/load.jpg")
+            .cardImageUrl("http://assets.fanart.tv/fanart/movies/920/movieposter/cars-5214d18d6721b.jpg")
             .bgImageUrl("http://some.fake/image/load.jpg")
             .videoUrl("")
             .runtime(t.runtime)
@@ -441,6 +441,49 @@ public class Chilly {
     }
 
 
+    public String getTMDBImage(Video video, String imageType) {
+
+        String tmdb_url = "";
+        String img_url = "";
+
+        switch (video.videoType) {
+            case "movie":
+                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/movie/" + video.tmdb_id + "/images?language=en&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key); break;
+            case "show":
+                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/tv/" + video.tmdb_id + "/images?language=en&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key); break;
+//            case "season":
+//                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/movie/" + tvshow.tmdb_id + "/season/" + season.seasonNumber + "/images?language=en-US";
+
+        }
+        System.out.println(tmdb_url);
+        int cacheSize = 50 * 1024 * 1024; // 50 MiB
+        Cache cache = new Cache(new File(mContext.getCacheDir().getPath()), cacheSize);
+        OkHttpClient client = new OkHttpClient.Builder().cache(cache).readTimeout(1, TimeUnit.SECONDS).build();
+        Request request = new Request.Builder().url(tmdb_url).build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            System.out.println(response.cacheResponse());
+            TMDBGson.TMDBElem tmdbElem = gson.fromJson(response.body().string(), TMDBGson.TMDBElem.class);
+            switch (imageType) {
+                case "poster":
+                    img_url =  mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.posters.get(0).file_path;
+                    break;
+                case "backdrop":
+                    img_url =  mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.backdrops.get(0).file_path;
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(img_url);
+
+        return img_url;
+
+    }
+
+
     public String getFanartPoster(TraktGson.TraktElem t, String videoType) {
         String poster = "TEST";
         String fanart_url = "";
@@ -474,6 +517,72 @@ public class Chilly {
             System.out.println(response.cacheResponse());
             FanartGson.FanartElem fanartElem = gson.fromJson(response.body().string(), FanartGson.FanartElem.class);
             switch(videoType) {
+                case "movie":
+                    for(FanartGson.FanartData f : fanartElem.movieposter) {
+                        if(!f.lang.equals("00")) {
+                            poster = f.url;
+                        }
+                        if(f.lang.equals("en")) {
+                            poster = f.url;
+                            break;
+                        }
+                    }
+                    break;
+                case "show":
+                    for(FanartGson.FanartData f : fanartElem.tvposter) {
+                        if(!f.lang.equals("00")) {
+                            poster = f.url;
+                        }
+                        if(f.lang.equals("en")) {
+                            poster = f.url;
+                            break;
+                        }
+                    }
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        poster = poster.replace("/fanart/", "/preview/");
+        return poster;
+
+    }
+
+
+
+    public String getFanartPoster(Video video) {
+        String poster = "TEST";
+        String fanart_url = "";
+        switch(video.videoType) {
+            case "movie":
+                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + video.tmdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+                break;
+            case "show":
+                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + video.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+                break;
+            case "season":
+                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+                break;
+        }
+
+        System.out.println(fanart_url);
+
+
+        int cacheSize = 50 * 1024 * 1024; // 50 MiB
+        Cache cache = new Cache(new File(mContext.getCacheDir().getPath()), cacheSize);
+
+        OkHttpClient client = new OkHttpClient.Builder().cache(cache).readTimeout(1, TimeUnit.SECONDS).build();
+
+        Request request = new Request.Builder().url(fanart_url).build();
+
+
+
+
+        try {
+            Response response = client.newCall(request).execute();
+            System.out.println(response.cacheResponse());
+            FanartGson.FanartElem fanartElem = gson.fromJson(response.body().string(), FanartGson.FanartElem.class);
+            switch(video.videoType) {
                 case "movie":
                     for(FanartGson.FanartData f : fanartElem.movieposter) {
                         if(!f.lang.equals("00")) {

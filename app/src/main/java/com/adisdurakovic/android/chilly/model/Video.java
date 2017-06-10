@@ -35,7 +35,7 @@ public final class Video implements Parcelable {
     public final String title;
     public final String description;
     public final String bgImageUrl;
-    public final String cardImageUrl;
+    public String cardImageUrl;
     public  String videoUrl;
     public final String studio;
     public final String productionYear;

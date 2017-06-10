@@ -263,8 +263,8 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
 
 
 
-        ArrayObjectAdapter movies = new ArrayObjectAdapter(new CardPresenter());
-        ArrayObjectAdapter tvshows = new ArrayObjectAdapter(new CardPresenter());
+        ArrayObjectAdapter movies = new ArrayObjectAdapter(new CardPresenter(getActivity()));
+        ArrayObjectAdapter tvshows = new ArrayObjectAdapter(new CardPresenter(getActivity()));
         ArrayObjectAdapter settings = new ArrayObjectAdapter(new GridItemPresenter());
 
         movies.addAll(movies.size(), start_movies);
@@ -470,7 +470,6 @@ class HomeLoaderTask extends AsyncTask<String, String, String> {
     List<Video> start_tvshows;
     HomeLoaderResponse delegate = null;
     Context ctx;
-    Chilly chilly = null;
 
     public HomeLoaderTask(Context ctx, HomeLoaderResponse del) {
         this.delegate = del;
