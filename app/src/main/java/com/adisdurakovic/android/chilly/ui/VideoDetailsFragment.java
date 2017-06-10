@@ -54,6 +54,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.data.Chilly;
+import com.adisdurakovic.android.chilly.data.ChillyTasks;
 import com.adisdurakovic.android.chilly.data.ListElem;
 import com.adisdurakovic.android.chilly.stream.StreamGrabber;
 import com.adisdurakovic.android.chilly.stream.StreamSource;
@@ -74,7 +75,7 @@ import java.util.List;
  * VideoDetailsFragment extends DetailsFragment, a Wrapper fragment for leanback details screens.
  * It shows a detailed view of video and its metadata plus related videos.
  */
-public class VideoDetailsFragment extends DetailsFragment implements SeasonResponse, StreamResponse {
+public class VideoDetailsFragment extends DetailsFragment implements ChillyTasks.SeasonResponse, ChillyTasks.StreamResponse {
     private static final int NO_NOTIFICATION = -1;
     private static final int ACTION_PLAY_NOW = 1;
     private static final int ACTION_PLAY_FROM = 2;
@@ -216,7 +217,7 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
             @Override
             public void onActionClicked(Action action) {
                 if (action.getId() == ACTION_PLAY_NOW) {
-                    new StreamTask(mFragment, mSelectedVideo).execute();
+                    new ChillyTasks.StreamTask(mFragment, mSelectedVideo).execute();
                 } else if (action.getId() == ACTION_PLAY_FROM) {
                     Intent intent = new Intent(getActivity(), ListSelectActivity.class);
                     ListElem le = new ListElem("Trakt", "get-sources", mSelectedVideo);
@@ -393,7 +394,7 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
         System.out.println(mSelectedVideo);
 
         if(mSelectedVideo.videoType.equals("show")) {
-            new SeasonTask(getActivity().getApplicationContext(), this, mSelectedVideo).execute();
+            new ChillyTasks.SeasonTask(getActivity().getApplicationContext(), this, mSelectedVideo).execute();
         }
 
     }
@@ -418,149 +419,5 @@ public class VideoDetailsFragment extends DetailsFragment implements SeasonRespo
 }
 
 
-// Background ASYNC Task to login by making HTTP Request
-//class StreamTask extends AsyncTask<String, String, String> {
-//
-//    private final Activity activity;
-//    private final Video mSelectedVideo;
-//    private final VideoDetailsFragment fragment;
-//    String streamurl = "";
-//
-//    public StreamTask(VideoDetailsFragment fragment, Video video) {
-//        this.activity = fragment.getActivity();
-//        this.mSelectedVideo = video;
-//        this.fragment = fragment;
-//    }
-//
-//    // Before starting background thread Show Progress Dialog
-//    @Override
-//    protected void onPreExecute() {
-//        super.onPreExecute();
-//        Toast.makeText(activity, fragment.getResources()
-//                .getString(R.string.playback_getsources), Toast.LENGTH_SHORT).show();
-//    }
-//
-//    // Checking login in background
-//    protected String doInBackground(String... params) {
-//
-//
-//        try {
-//            streamurl = StreamGrabber.getLastSource(mSelectedVideo);
-//        } catch (IOException e) {
-//
-//        }
-//
-//        return streamurl;
-//
-//    }
-//
-//    // After completing background task Dismiss the progress dialog
-//    protected void onPostExecute(String file_url) {
-//        // dismiss the dialog once done
-////        System.out.println(streamurl);
-//        Toast.makeText(activity, streamurl, Toast.LENGTH_SHORT).show();
-//        if(streamurl == "") {
-//            Toast.makeText(activity, fragment.getResources()
-//                    .getString(R.string.playback_nosources), Toast.LENGTH_SHORT).show();
-//        } else {
-//            mSelectedVideo.videoUrl = streamurl;
-//            Intent intent = new Intent(this.activity, PlaybackOverlayActivity.class);
-//            intent.putExtra(VideoDetailsActivity.VIDEO, this.mSelectedVideo);
-//            fragment.startActivity(intent);
-//        }
-//
-//
-//    }
-//}
 
 
-interface SeasonResponse {
-    void onGetSeasons(List<Video> seasons);
-}
-
-class SeasonTask extends AsyncTask<String, String, String> {
-
-    private final Video mSelectedVideo;
-    ArrayObjectAdapter show_seasons;
-    Context ctx;
-
-    SeasonResponse delegate;
-
-    List<Video> video_list = new ArrayList<>();
-
-    public SeasonTask(Context ctx, SeasonResponse del, Video video) {
-        this.mSelectedVideo = video;
-        this.ctx = ctx;
-        this.delegate = del;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-        try {
-            video_list = Chilly.getInstance(ctx).getSeasonsForShow(mSelectedVideo);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "";
-
-    }
-
-    // After completing background task Dismiss the progress dialog
-    protected void onPostExecute(String file_url) {
-        delegate.onGetSeasons(video_list);
-    }
-}
-
-
-interface StreamResponse {
-    void onStreamGrab(List<StreamSource> streams);
-}
-
-
-class StreamTask extends AsyncTask<String, String, String> {
-
-    private final Video mSelectedVideo;
-    StreamResponse delegate;
-    List<StreamSource> streams;
-
-    public StreamTask(StreamResponse del, Video video) {
-        this.mSelectedVideo = video;
-        this.delegate = del;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-
-        try {
-            streams = StreamGrabber.getSources(mSelectedVideo);
-        } catch (IOException e) {
-
-        }
-
-        return "";
-
-    }
-
-    // After completing background task Dismiss the progress dialog
-    protected void onPostExecute(String streamurl) {
-        // dismiss the dialog once done
-//        System.out.println(streamurl);
-        delegate.onStreamGrab(streams);
-
-    }
-}

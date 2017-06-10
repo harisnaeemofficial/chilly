@@ -57,18 +57,20 @@ import android.widget.Toast;
 import com.adisdurakovic.android.chilly.BuildConfig;
 import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.data.Chilly;
+import com.adisdurakovic.android.chilly.data.ChillyTasks;
 import com.adisdurakovic.android.chilly.data.VideoContract;
 import com.adisdurakovic.android.chilly.model.Video;
 import com.adisdurakovic.android.chilly.model.VideoCursorMapper;
 import com.adisdurakovic.android.chilly.presenter.CardPresenter;
 
 import java.util.List;
+import java.util.Map;
 
 /*
  * This class demonstrates how to do in-app search
  */
 public class SearchFragment extends android.support.v17.leanback.app.SearchFragment
-        implements android.support.v17.leanback.app.SearchFragment.SearchResultProvider, SearchLoaderResponse {
+        implements android.support.v17.leanback.app.SearchFragment.SearchResultProvider, ChillyTasks.SearchLoaderResponse {
     private static final String TAG = "SearchFragment";
     private static final boolean DEBUG = BuildConfig.DEBUG;
     private static final boolean FINISH_ON_RECOGNIZER_CANCELED = true;
@@ -176,7 +178,7 @@ public class SearchFragment extends android.support.v17.leanback.app.SearchFragm
         if (DEBUG) Log.i(TAG, String.format("Search text submitted: %s", query));
 //        loadQuery(query);
 //        getFragmentManager().beginTransaction().add(R.id.search_fragment, mSpinnerFragment).commit();
-        new SearchLoaderTask(getActivity().getApplicationContext(), this, query).execute();
+        new ChillyTasks.SearchLoaderTask(getActivity().getApplicationContext(), this, query).execute();
         return true;
     }
 
@@ -237,21 +239,32 @@ public class SearchFragment extends android.support.v17.leanback.app.SearchFragm
 //        mVideoCursorAdapter.changeCursor(null);
 //    }
 //
-    private final class ItemViewClickedListener implements OnItemViewClickedListener {
+    private final class ItemViewClickedListener implements OnItemViewClickedListener, ChillyTasks.ImageLoaderResponse {
+
+        ImageCardView cardView;
+
+        @Override
+        public void onLoadFinish(Map<String, String> images, Video video) {
+            Intent intent = new Intent(getActivity(), VideoDetailsActivity.class);
+            video.cardImageUrl = images.get("poster");
+            intent.putExtra(VideoDetailsActivity.VIDEO, video);
+
+            Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    getActivity(),
+                    cardView.getMainImageView(),
+                    VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
+            getActivity().startActivity(intent, bundle);
+        }
+
         @Override
         public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
                 RowPresenter.ViewHolder rowViewHolder, Row row) {
 
             if (item instanceof Video) {
                 Video video = (Video) item;
-                Intent intent = new Intent(getActivity(), VideoDetailsActivity.class);
-                intent.putExtra(VideoDetailsActivity.VIDEO, video);
+                cardView = (ImageCardView) itemViewHolder.view;
+                new ChillyTasks.ImageLoaderTask(getActivity().getApplicationContext(), this, video).execute();
 
-                Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                        getActivity(),
-                        ((ImageCardView) itemViewHolder.view).getMainImageView(),
-                        VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
-                getActivity().startActivity(intent, bundle);
             } else {
                 Toast.makeText(getActivity(), ((String) item), Toast.LENGTH_SHORT).show();
             }
@@ -277,45 +290,3 @@ public class SearchFragment extends android.support.v17.leanback.app.SearchFragm
 
 }
 
-
-interface SearchLoaderResponse {
-    void onSearchFinish(List<Video> found_videos);
-}
-
-
-// Background ASYNC Task to login by making HTTP Request
-class SearchLoaderTask extends AsyncTask<String, String, String> {
-
-    List<Video> found_items;
-    SearchLoaderResponse delegate = null;
-    Context ctx;
-    String query = "";
-
-    public SearchLoaderTask(Context ctx, SearchLoaderResponse del, String q) {
-        this.delegate = del;
-        this.ctx = ctx;
-        this.query = q;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-//        Toast.makeText(activity, "Loading...", Toast.LENGTH_SHORT).show();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-        found_items = Chilly.getInstance(ctx).getBySearch(query);
-
-        return "";
-
-    }
-
-    // After completing background task Dismiss the progress dialog
-    protected void onPostExecute(String file_url) {
-        delegate.onSearchFinish(found_items);
-
-    }
-}

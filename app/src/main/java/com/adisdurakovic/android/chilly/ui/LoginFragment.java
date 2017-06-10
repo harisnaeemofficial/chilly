@@ -37,6 +37,7 @@ import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.data.Chilly;
+import com.adisdurakovic.android.chilly.data.ChillyTasks;
 import com.adisdurakovic.android.chilly.data.ListElem;
 
 import org.json.JSONException;
@@ -48,7 +49,7 @@ import java.util.List;
 /*
  * This class demonstrates how to extend ErrorFragment to create an error dialog.
  */
-public class LoginFragment extends ErrorFragment implements RequestCodeResponse, RequestTokenResponse, RequestUserResponse {
+public class LoginFragment extends ErrorFragment implements ChillyTasks.RequestCodeResponse, ChillyTasks.RequestTokenResponse, ChillyTasks.RequestUserResponse {
     private static final boolean TRANSLUCENT = true;
     private final String TAG = "LOGIN";
 
@@ -79,7 +80,7 @@ public class LoginFragment extends ErrorFragment implements RequestCodeResponse,
 //                setErrorContent();
 //            }
 //        }, TIMER_DELAY);
-        new RequestCodeTask(getActivity().getApplicationContext(), this).execute();
+        new ChillyTasks.RequestCodeTask(getActivity().getApplicationContext(), this).execute();
 
     }
 
@@ -106,13 +107,13 @@ public class LoginFragment extends ErrorFragment implements RequestCodeResponse,
         }
 
 //            setMessage(loginResponse.getString("user_code"));
-            final RequestTokenResponse me = this;
+            final ChillyTasks.RequestTokenResponse me = this;
             mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 try {
                     if(!hasToken && tokenExpired < TOKEN_EXPIRE) {
-                        new RequestTokenTask(getActivity().getApplicationContext(), me, loginResponse.getString("device_code")).execute();
+                        new ChillyTasks.RequestTokenTask(getActivity().getApplicationContext(), me, loginResponse.getString("device_code")).execute();
                         mHandler.postDelayed(this, TOKEN_INTERVAL);
                         tokenExpired += TOKEN_INTERVAL;
                     }
@@ -147,7 +148,7 @@ public class LoginFragment extends ErrorFragment implements RequestCodeResponse,
             Log.d(TAG, "tokenResponse: " + tokenResponse);
             hasToken = true;
             try {
-                new RequestUserTask(getActivity().getApplicationContext(), this, tokenResponse.getString("access_token")).execute();
+                new ChillyTasks.RequestUserTask(getActivity().getApplicationContext(), this, tokenResponse.getString("access_token")).execute();
             } catch (JSONException e) {
 
             }
@@ -187,117 +188,3 @@ public class LoginFragment extends ErrorFragment implements RequestCodeResponse,
     }
 }
 
-
-interface RequestCodeResponse {
-    void onReceiveCode(JSONObject loginResponse);
-}
-
-
-class RequestCodeTask extends AsyncTask<String, String, String> {
-
-    RequestCodeResponse delegate;
-    Context ctx;
-    JSONObject loginResponse = new JSONObject();
-
-    public RequestCodeTask(Context context, RequestCodeResponse del) {
-        this.delegate = del;
-        this.ctx = context;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-        loginResponse = Chilly.getInstance(ctx).getCodeFromTrakt();
-
-        return "";
-    }
-
-    // After completing background task Dismiss the progress dialog
-    protected void onPostExecute(String somestring) {
-        // dismiss the dialog once done
-        delegate.onReceiveCode(loginResponse);
-
-    }
-}
-
-
-interface RequestTokenResponse {
-    void onReceiveToken(JSONObject loginResponse);
-}
-
-
-class RequestTokenTask extends AsyncTask<String, String, String> {
-
-    RequestTokenResponse delegate;
-    Context ctx;
-    JSONObject tokenResponse = new JSONObject();
-    String code;
-
-    public RequestTokenTask(Context context, RequestTokenResponse del, String device_code) {
-        this.delegate = del;
-        this.ctx = context;
-        this.code = device_code;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-        tokenResponse = Chilly.getInstance(ctx).getTokenFromTrakt(code);
-        return "";
-
-    }
-
-    protected void onPostExecute(String somestring) {
-        delegate.onReceiveToken(tokenResponse);
-    }
-}
-
-
-interface RequestUserResponse {
-    void onReceiveUser(JSONObject userResponse);
-}
-
-
-class RequestUserTask extends AsyncTask<String, String, String> {
-
-    RequestUserResponse delegate;
-    Context ctx;
-    JSONObject userResponse = new JSONObject();
-    String code;
-
-    public RequestUserTask(Context context, RequestUserResponse del, String access_token) {
-        this.delegate = del;
-        this.ctx = context;
-        this.code = access_token;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-        userResponse = Chilly.getInstance(ctx).getUserFromTrakt(code);
-        return "";
-
-    }
-
-    protected void onPostExecute(String somestring) {
-        delegate.onReceiveUser(userResponse);
-    }
-}

@@ -30,9 +30,12 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.adisdurakovic.android.chilly.data.Chilly;
+import com.adisdurakovic.android.chilly.data.ChillyTasks;
 import com.bumptech.glide.Glide;
 import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.model.Video;
+
+import java.util.Map;
 
 /*
  * A CardPresenter is used to generate Views and bind Objects to them on demand.
@@ -59,7 +62,7 @@ public class CardPresenter extends Presenter {
 
 
 
-    static class ViewHolder extends Presenter.ViewHolder implements ImageLoaderResponse  {
+    static class ViewHolder extends Presenter.ViewHolder implements ChillyTasks.ImageLoaderResponse  {
         private ImageCardView mCardView;
 
         public ViewHolder(View view) {
@@ -75,15 +78,15 @@ public class CardPresenter extends Presenter {
 //            mCardView.getMainImageView().setScaleType(ImageView.ScaleType.CENTER);
 //            AsyncImageLoader.LoadImage(new CoverFetcher(mediaWrapper), mCardView);
 //            System.out.println(bgUri);
-            new ImageLoaderTask(ctx.getApplicationContext(), this, video, mCardView).execute();
+            new ChillyTasks.ImageLoaderTask(ctx.getApplicationContext(), this, video).execute();
         }
 
         @Override
-        public void onLoadFinish(String img_url, ImageCardView cardView, Video video) {
-                Glide.with(cardView.getContext())
-                        .load(img_url)
+        public void onLoadFinish(Map<String, String> images, Video video) {
+                Glide.with(mCardView.getContext())
+                        .load(images.get("poster"))
                         .error(mDefaultCardImage)
-                        .into(cardView.getMainImageView());
+                        .into(mCardView.getMainImageView());
 
         }
 
@@ -172,45 +175,3 @@ public class CardPresenter extends Presenter {
 }
 
 
-interface ImageLoaderResponse {
-    void onLoadFinish(String img_url, ImageCardView cardView, Video video);
-}
-
-
-// Background ASYNC Task to login by making HTTP Request
-class ImageLoaderTask extends AsyncTask<String, String, String> {
-
-    ImageLoaderResponse delegate = null;
-    String img_url = "";
-    Context ctx;
-    Video video;
-    ImageCardView cardView;
-
-    public ImageLoaderTask(Context ctx, ImageLoaderResponse del, Video v, ImageCardView cardView) {
-        this.delegate = del;
-        this.ctx = ctx;
-        this.video = v;
-        this.cardView = cardView;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-//        Toast.makeText(activity, "Loading...", Toast.LENGTH_SHORT).show();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-        img_url = Chilly.getInstance(ctx).getTMDBImage(video, "poster");
-        return "";
-
-    }
-
-    // After completing background task Dismiss the progress dialog
-    protected void onPostExecute(String file_url) {
-        delegate.onLoadFinish(img_url, cardView, video);
-
-    }
-}

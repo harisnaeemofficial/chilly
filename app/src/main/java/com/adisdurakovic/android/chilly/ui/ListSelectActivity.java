@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.data.Chilly;
+import com.adisdurakovic.android.chilly.data.ChillyTasks;
 import com.adisdurakovic.android.chilly.data.ListElem;
 import com.adisdurakovic.android.chilly.model.Video;
 import com.adisdurakovic.android.chilly.stream.StreamGrabber;
@@ -44,7 +45,7 @@ import java.util.List;
 /**
  * Activity that showcases different aspects of GuidedStepFragments.
  */
-public class ListSelectActivity extends Activity implements ListResponse {
+public class ListSelectActivity extends Activity implements ChillyTasks.ListResponse {
 
     private static String displayList;
 
@@ -80,7 +81,7 @@ public class ListSelectActivity extends Activity implements ListResponse {
         super.onCreate(savedInstanceState);
         if (null == savedInstanceState) {
             ListElem elem = (ListElem) getIntent().getParcelableExtra("listElem");
-            new ListTask(getApplicationContext(), this, elem).execute();
+            new ChillyTasks.ListTask(getApplicationContext(), this, elem).execute();
         }
 
 
@@ -150,15 +151,15 @@ public class ListSelectActivity extends Activity implements ListResponse {
             if(action.getTitle().toString().contains("Add to")) {
                 if(video != null) {
                     if(action.getTitle().toString().contains("Collection")) {
-                        new TraktTask(getActivity().getApplicationContext(), "add-to-collection", video).execute();
+                        new ChillyTasks.TraktTask(getActivity().getApplicationContext(), "add-to-collection", video).execute();
                     } else if(action.getTitle().toString().contains("Watchlist")) {
-                        new TraktTask(getActivity().getApplicationContext(), "add-to-watchlist", video).execute();
+                        new ChillyTasks.TraktTask(getActivity().getApplicationContext(), "add-to-watchlist", video).execute();
                     }
                     Toast.makeText(getActivity(), "DONE!", Toast.LENGTH_SHORT).show();
                 }
             } else if(action.getTitle().toString().contains("Mark as")) {
                 if(video != null) {
-                    new TraktTask(getActivity().getApplicationContext(), "mark-as-watched", video).execute();
+                    new ChillyTasks.TraktTask(getActivity().getApplicationContext(), "mark-as-watched", video).execute();
                     Toast.makeText(getActivity(), "DONE!", Toast.LENGTH_SHORT).show();
                 }
             } else if(action.getDescription().toString().contains("Stream: ")) {
@@ -185,126 +186,5 @@ public class ListSelectActivity extends Activity implements ListResponse {
 
 }
 
-interface ListResponse {
-    void onListGrab(List<ListElem> output, String title, String subtitle, Video video);
-}
-
-
-class ListTask extends AsyncTask<String, String, String> {
-
-    ListElem item;
-    ListResponse delegate;
-    List<ListElem> list = new ArrayList<ListElem>();
-    Context ctx;
-    String title = "";
-    String subtitle = "";
-
-    public ListTask(Context ctx, ListResponse del, ListElem item) {
-        this.item = item;
-        this.delegate = del;
-        this.ctx = ctx;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-
-
-        try {
-            switch(item.slug) {
-                case "genres":
-                    list = Chilly.getInstance(ctx).getGenres(item.videoType);
-                    title = "GENRES";
-                    subtitle = "Browse " + item.videoType + "s by genres";
-                    break;
-                case "trakt-public-list":
-                    list = Chilly.getInstance(ctx).getPublicList(item.videoType);
-                    title = item.videoType.toUpperCase() + "S";
-                    subtitle = "Browse " + item.videoType + "s by categories";
-                    break;
-                case "trakt-actions":
-                    list = Chilly.getInstance(ctx).getTraktActions(item.videoType, item.video);
-                    title = "TRAKT";
-                    subtitle = "Perform a Trakt-action.";
-                    break;
-                case "get-sources":
-                    List<StreamSource> source_list = StreamGrabber.getSources(item.video);
-
-                    for(StreamSource s : source_list) {
-                        item.video.videoUrl = s.url;
-                        ListElem le = new ListElem(s.quality + "P", "play-video",s.url, s.provider, "");
-                        list.add(le);
-                    }
-                    title = "PLAY FROM";
-                    subtitle = "Select a stream provider to play from.";
-                    break;
-
-
-            }
-
-        } catch (Exception e) {
-
-        }
-        return "";
-
-    }
-
-    // After completing background task Dismiss the progress dialog
-    protected void onPostExecute(String somestring) {
-        delegate.onListGrab(list, title, subtitle, item.video);
-    }
-}
-
-
-class TraktTask extends AsyncTask<String, String, String> {
-
-    Context ctx;
-    String action;
-    Video v;
-
-    public TraktTask(Context ctx, String action, Video video) {
-        this.action = action;
-        this.v = video;
-        this.ctx = ctx;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-
-
-        switch (action) {
-            case "add-to-collection":
-                Chilly.getInstance(ctx).addToTrakt("collection", v);
-                break;
-            case "add-to-watchlist":
-                Chilly.getInstance(ctx).addToTrakt("watchlist", v);
-                break;
-            case "mark-as-watched":
-                Chilly.getInstance(ctx).markAsWatched(v);
-                break;
-        }
-
-        return "";
-
-    }
-
-    // After completing background task Dismiss the progress dialog
-    protected void onPostExecute(String somestring) {
-//        delegate.onListGrab(list, title, subtitle, item.video);
-    }
-}
 
 

@@ -34,7 +34,7 @@ public final class Video implements Parcelable {
     public String imdb_id;
     public final String title;
     public final String description;
-    public final String bgImageUrl;
+    public String bgImageUrl;
     public String cardImageUrl;
     public  String videoUrl;
     public final String studio;
@@ -43,7 +43,7 @@ public final class Video implements Parcelable {
     public long airedEpisodes;
     public final String seasonNumber;
     public final String episodeNumber;
-    public final Video episodeShow;
+    public final Video videoShow;
     public final long runtime;
     public final double rating;
     public final String trailer;
@@ -66,7 +66,7 @@ public final class Video implements Parcelable {
             final long airedEpisodes,
             final String seasonNumber,
             final String episodeNumber,
-            final Video episodeShow,
+            final Video videoShow,
             final long runtime,
             final double rating,
             final String trailer,
@@ -87,7 +87,7 @@ public final class Video implements Parcelable {
         this.airedEpisodes = airedEpisodes;
         this.seasonNumber = seasonNumber;
         this.episodeNumber = episodeNumber;
-        this.episodeShow = episodeShow;
+        this.videoShow = videoShow;
         this.runtime = runtime;
         this.rating = rating;
         this.trailer = trailer;
@@ -110,7 +110,7 @@ public final class Video implements Parcelable {
         airedEpisodes = in.readLong();
         seasonNumber = in.readString();
         episodeNumber = in.readString();
-        episodeShow = in.readParcelable(Video.class.getClassLoader());
+        videoShow = in.readParcelable(Video.class.getClassLoader());
         runtime = in.readLong();
         rating = in.readDouble();
         trailer = in.readString();
@@ -155,7 +155,7 @@ public final class Video implements Parcelable {
         dest.writeLong(airedEpisodes);
         dest.writeString(seasonNumber);
         dest.writeString(episodeNumber);
-        dest.writeParcelable(episodeShow, flags);
+        dest.writeParcelable(videoShow, flags);
         dest.writeLong(runtime);
         dest.writeDouble(rating);
         dest.writeString(trailer);
@@ -166,8 +166,8 @@ public final class Video implements Parcelable {
     public String toString() {
 
         String es = "";
-        if(episodeShow != null) {
-            es = episodeShow.toString();
+        if(videoShow != null) {
+            es = videoShow.toString();
         }
 
         String s = "Video{";
@@ -186,7 +186,7 @@ public final class Video implements Parcelable {
         s += ", airedEpisodes='" + airedEpisodes + "'";
         s += ", seasonNumber='" + seasonNumber + "'";
         s += ", episodeNumber='" + episodeNumber + "'";
-        s += ", episodeShow='" + es + "'";
+        s += ", videoShow='" + es + "'";
         s += ", runtime='" + runtime + "'";
         s += ", rating='" + rating + "'";
         s += ", trailer='" + trailer + "'";
@@ -212,7 +212,7 @@ public final class Video implements Parcelable {
         public long airedEpisodes;
         private String seasonNumber;
         private String episodeNumber;
-        private Video episodeShow;
+        private Video videoShow;
         public long runtime;
         public double rating;
         private String trailer;
@@ -294,8 +294,8 @@ public final class Video implements Parcelable {
             return this;
         }
 
-        public VideoBuilder episodeShow(Video episodeShow) {
-            this.episodeShow = episodeShow;
+        public VideoBuilder videoShow(Video videoShow) {
+            this.videoShow = videoShow;
             return this;
         }
 
@@ -362,7 +362,7 @@ public final class Video implements Parcelable {
                     airedEpisodes,
                     seasonNumber,
                     episodeNumber,
-                    episodeShow,
+                    videoShow,
                     runtime,
                     rating,
                     trailer,

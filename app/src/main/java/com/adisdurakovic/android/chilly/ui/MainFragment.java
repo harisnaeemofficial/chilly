@@ -45,6 +45,7 @@ import android.util.DisplayMetrics;
 import android.view.View;
 
 import com.adisdurakovic.android.chilly.data.Chilly;
+import com.adisdurakovic.android.chilly.data.ChillyTasks;
 import com.adisdurakovic.android.chilly.data.ListElem;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
@@ -57,13 +58,14 @@ import com.adisdurakovic.android.chilly.presenter.IconHeaderItemPresenter;
 import com.adisdurakovic.android.chilly.recommendation.UpdateRecommendationsService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 /*
  * Main class to show BrowseFragment with header and rows of videos
  */
-public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
+public class MainFragment extends BrowseFragment implements ChillyTasks.HomeLoaderResponse {
     private static final int BACKGROUND_UPDATE_DELAY = 300;
     private final Handler mHandler = new Handler();
     private ArrayObjectAdapter mCategoryRowAdapter;
@@ -248,7 +250,7 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
         mCategoryRowAdapter.add(row);
 
 
-        new HomeLoaderTask(getActivity().getApplicationContext(), this).execute();
+        new ChillyTasks.HomeLoaderTask(getActivity().getApplicationContext(), this).execute();
 
 
     }
@@ -352,23 +354,44 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
         }
     }
 
-    private final class ItemViewClickedListener implements OnItemViewClickedListener {
+    private final class ItemViewClickedListener implements OnItemViewClickedListener, ChillyTasks.ImageLoaderResponse {
+
+        ImageCardView cardView;
+
+        @Override
+        public void onLoadFinish(Map<String, String> images, Video video) {
+            Intent intent = new Intent(getActivity(), VideoDetailsActivity.class);
+            video.cardImageUrl = images.get("poster");
+            video.bgImageUrl = images.get("background");
+            intent.putExtra(VideoDetailsActivity.VIDEO, video);
+
+            Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    getActivity(),
+                    cardView.getMainImageView(),
+                    VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
+            getActivity().startActivity(intent, bundle);
+        }
 
 
         @Override
         public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
                 RowPresenter.ViewHolder rowViewHolder, Row row) {
 
+
+
+
             if (item instanceof Video) {
                 Video video = (Video) item;
-                Intent intent = new Intent(getActivity(), VideoDetailsActivity.class);
-                intent.putExtra(VideoDetailsActivity.VIDEO, video);
-
-                Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                        getActivity(),
-                        ((ImageCardView) itemViewHolder.view).getMainImageView(),
-                        VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
-                getActivity().startActivity(intent, bundle);
+                cardView = (ImageCardView) itemViewHolder.view;
+                new ChillyTasks.ImageLoaderTask(getActivity().getApplicationContext(), this, video).execute();
+//                Intent intent = new Intent(getActivity(), VideoDetailsActivity.class);
+//                intent.putExtra(VideoDetailsActivity.VIDEO, video);
+//
+//                Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
+//                        getActivity(),
+//                        ((ImageCardView) itemViewHolder.view).getMainImageView(),
+//                        VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
+//                getActivity().startActivity(intent, bundle);
             } else if (item instanceof String) {
 
                 if(item.equals("Login")) {
@@ -445,61 +468,26 @@ public class MainFragment extends BrowseFragment implements HomeLoaderResponse {
         }
     }
 
-    private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
+    private final class ItemViewSelectedListener implements OnItemViewSelectedListener, ChillyTasks.ImageLoaderResponse {
+
+        @Override
+        public void onLoadFinish(Map<String, String> images, Video video) {
+            video.bgImageUrl = images.get("background");
+            if(video.bgImageUrl != null) {
+                mBackgroundURI = Uri.parse(video.bgImageUrl);
+                startBackgroundTimer();
+            }
+        }
+
         @Override
         public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
                 RowPresenter.ViewHolder rowViewHolder, Row row) {
             if (item instanceof Video) {
-                mBackgroundURI = Uri.parse(((Video) item).bgImageUrl);
-                startBackgroundTimer();
+                Video video = (Video) item;
+                new ChillyTasks.ImageLoaderTask(getActivity().getApplicationContext(), this, video).execute();
             }
 
         }
     }
 }
 
-interface HomeLoaderResponse {
-    void onLoadFinish(List<Video> start_movies, List<Video> start_tvshows);
-}
-
-
-// Background ASYNC Task to login by making HTTP Request
-class HomeLoaderTask extends AsyncTask<String, String, String> {
-
-    List<Video> start_movies;
-    List<Video> start_tvshows;
-    HomeLoaderResponse delegate = null;
-    Context ctx;
-
-    public HomeLoaderTask(Context ctx, HomeLoaderResponse del) {
-        this.delegate = del;
-        this.ctx = ctx;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-//        Toast.makeText(activity, "Loading...", Toast.LENGTH_SHORT).show();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-        try {
-            start_movies = Chilly.getInstance(ctx).getTrendingMovies(10);
-            start_tvshows = Chilly.getInstance(ctx).getTrendingTVShows(10);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return "";
-
-    }
-
-    // After completing background task Dismiss the progress dialog
-    protected void onPostExecute(String file_url) {
-        delegate.onLoadFinish(start_movies, start_tvshows);
-
-    }
-}

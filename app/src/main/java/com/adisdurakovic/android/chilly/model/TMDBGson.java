@@ -13,6 +13,7 @@ public class TMDBGson {
         public String thetvdb_id;
         public List<TMDBData> backdrops;
         public List<TMDBData> posters;
+        public List<TMDBData> stills;
         public List<TMDBData> tvposter;
         public List<TMDBData> showbackground;
         public List<TMDBData> seasonposter;

@@ -34,7 +34,7 @@ public class Stream_sezonlukdizi extends StreamProvider {
         List<StreamSource> list = new ArrayList<>();
         if(!video.videoType.equals("episode")) return list;
 
-        String videotitle = video.episodeShow.title.toLowerCase().replaceAll("[^a-z0-9A-Z ]", "").replace(" ", "-");
+        String videotitle = video.videoShow.title.toLowerCase().replaceAll("[^a-z0-9A-Z ]", "").replace(" ", "-");
         String base_link = "http://sezonlukdizi.net";
         String url = base_link + "/" + videotitle + "/" + video.seasonNumber + "-sezon-" + video.episodeNumber + "-bolum.html";
         String video_url = base_link + "/ajax/dataEmbed.asp";

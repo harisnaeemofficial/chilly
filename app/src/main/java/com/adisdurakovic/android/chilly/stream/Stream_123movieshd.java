@@ -35,7 +35,7 @@ public class Stream_123movieshd extends StreamProvider {
         String title = video.title;
 
         if(video.videoType.equals("episode")) {
-            title = video.episodeShow.title + " season " + video.seasonNumber;
+            title = video.videoShow.title + " season " + video.seasonNumber;
         }
 
         String videotitle = title.toLowerCase().replaceAll("[^a-z0-9A-Z ]", "").replace(" ", "-");

@@ -50,6 +50,7 @@ import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.R;
 import com.adisdurakovic.android.chilly.data.Chilly;
+import com.adisdurakovic.android.chilly.data.ChillyTasks;
 import com.adisdurakovic.android.chilly.data.FetchVideoService;
 import com.adisdurakovic.android.chilly.data.ListElem;
 import com.adisdurakovic.android.chilly.data.VideoContract;
@@ -60,13 +61,16 @@ import com.adisdurakovic.android.chilly.presenter.GridItemPresenter;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /*
  * VerticalGridFragment shows a grid of videos that can be scrolled vertically.
  */
-public class VerticalGridFragment extends android.support.v17.leanback.app.VerticalGridFragment implements VideoLoaderResponse {
+public class VerticalGridFragment extends android.support.v17.leanback.app.VerticalGridFragment implements ChillyTasks.VideoLoaderResponse {
 
     private static final int NUM_COLUMNS = 5;
     private final CursorObjectAdapter mVideoCursorAdapter =
@@ -97,7 +101,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
         mSelectedSeason = (Video) getActivity().getIntent()
                 .getParcelableExtra("season");
 
-        CardPresenter cp = new CardPresenter();
+        CardPresenter cp = new CardPresenter(getActivity());
 
         VerticalGridPresenter gridPresenter = new VerticalGridPresenter();
         gridPresenter.setNumberOfColumns(5);
@@ -171,23 +175,32 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
     }
 
 
-    private final class ItemViewClickedListener implements OnItemViewClickedListener {
+    private final class ItemViewClickedListener implements OnItemViewClickedListener, ChillyTasks.ImageLoaderResponse {
+
+        ImageCardView cardView;
+
+        @Override
+        public void onLoadFinish(Map<String, String> images, Video video) {
+            video.bgImageUrl = images.get("background");
+            video.cardImageUrl = images.get("poster");
+            Intent intent = new Intent(getActivity(), VideoDetailsActivity.class);
+            intent.putExtra(VideoDetailsActivity.VIDEO, video);
+
+            Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    getActivity(),
+                    cardView.getMainImageView(),
+                    VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
+            getActivity().startActivity(intent, bundle);
+        }
+
         @Override
         public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
                 RowPresenter.ViewHolder rowViewHolder, Row row) {
 
             if (item instanceof Video) {
                 Video video = (Video) item;
-                ((Video) item).cardImageUrl = "http://assets.fanart.tv/fanart/movies/920/movieposter/cars-5214d18d6721b.jpg";
-
-                Intent intent = new Intent(getActivity(), VideoDetailsActivity.class);
-                intent.putExtra(VideoDetailsActivity.VIDEO, video);
-
-                Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                        getActivity(),
-                        ((ImageCardView) itemViewHolder.view).getMainImageView(),
-                        VideoDetailsActivity.SHARED_ELEMENT_NAME).toBundle();
-                getActivity().startActivity(intent, bundle);
+                cardView = (ImageCardView) itemViewHolder.view;
+                new ChillyTasks.ImageLoaderTask(getActivity().getApplicationContext(), this, video).execute();
             }
         }
     }
@@ -209,7 +222,7 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
 
     public void loadVideos(int page) {
         getFragmentManager().beginTransaction().add(R.id.vertical_grid_fragment, mSpinnerFragment).commit();
-        new VideoLoaderTask(getActivity().getApplicationContext(), this, elem, page).execute();
+        new ChillyTasks.VideoLoaderTask(getActivity().getApplicationContext(), this, elem, page).execute();
     }
 
     private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
@@ -247,68 +260,3 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
 
 }
 
-interface VideoLoaderResponse {
-    void onGrabVideos(List<Video> video_list);
-}
-
-// Background ASYNC Task to login by making HTTP Request
-class VideoLoaderTask extends AsyncTask<String, String, String> {
-
-    VideoLoaderResponse delegate = null;
-    List<Video> video_list;
-    private ListElem elem;
-    Context ctx;
-    int page;
-
-
-    public VideoLoaderTask(Context ctx, VideoLoaderResponse del, ListElem elem, int page) {
-        this.delegate = del;
-        this.ctx = ctx;
-        this.video_list = new ArrayList<>();
-        this.elem = elem;
-        this.page = page;
-    }
-
-    // Before starting background thread Show Progress Dialog
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-//        Toast.makeText(activity, "Loading...", Toast.LENGTH_SHORT).show();
-    }
-
-    // Checking login in background
-    protected String doInBackground(String... params) {
-
-
-        try {
-
-            if(elem.tvshow != null && elem.season != null) {
-                video_list = Chilly.getInstance(ctx).getEpisodesForShowSeason(elem.tvshow, elem.season);
-            } else {
-                if(elem.slug.contains("public")) {
-                    video_list = Chilly.getInstance(ctx).getPublicVideos(elem.slug.replace("public-", ""), elem.videoType, 40, page);
-                }
-
-                if(elem.slug.contains("user")) {
-                    video_list = Chilly.getInstance(ctx).getUserVideos(elem.slug.replace("user-", ""), elem.videoType);
-                }
-
-                if(!elem.filterType.equals("")) {
-                    video_list = Chilly.getInstance(ctx).getByFilter(elem, 40);
-                }
-            }
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return "";
-
-    }
-
-    // After completing background task Dismiss the progress dialog
-    protected void onPostExecute(String file_url) {
-        delegate.onGrabVideos(video_list);
-    }
-}

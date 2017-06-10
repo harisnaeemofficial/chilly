@@ -31,7 +31,7 @@ public class Stream_dayt extends StreamProvider {
         String url = "http://cyro.se/watch/" + videotitle;
 
         if(video.videoType.equals("episode")) {
-            videotitle = video.episodeShow.title.toLowerCase().replaceAll("[^a-z0-9A-Z ]", "").replace(" ", "-");
+            videotitle = video.videoShow.title.toLowerCase().replaceAll("[^a-z0-9A-Z ]", "").replace(" ", "-");
             url = "http://cyro.se/watch/" + videotitle + "/s" + video.seasonNumber + "/e" + video.episodeNumber;
         }
 

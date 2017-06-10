@@ -32,7 +32,7 @@ public class Stream_dizigold extends StreamProvider {
 
         List<StreamSource> list = new ArrayList<>();
 
-        String title = video.episodeShow.title;
+        String title = video.videoShow.title;
 
         String videotitle = title.toLowerCase().replaceAll("[^a-z0-9A-Z ]", "").replace(" ", "-");
 

@@ -33,7 +33,7 @@ public class Stream_miradetodo extends StreamProvider {
         String imdb = video.imdb_id;
 
         if(video.videoType.equals("episode")) {
-            imdb = video.episodeShow.imdb_id;
+            imdb = video.videoShow.imdb_id;
         }
 
 

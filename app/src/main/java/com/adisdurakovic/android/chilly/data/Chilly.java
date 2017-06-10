@@ -377,6 +377,8 @@ public class Chilly {
                 .videoType("season")
                 .cardImageUrl(getFanartPoster(t, "season"))
                 .productionYear(String.valueOf(t.first_aired).substring(0, 4))
+                .videoShow(tvshow)
+                .seasonNumber(String.valueOf(t.number))
                 .build();
     }
 
@@ -385,7 +387,7 @@ public class Chilly {
                 .seasonNumber(String.valueOf(t.season))
                 .episodeNumber(String.valueOf(t.number))
                 .videoType("episode")
-                .episodeShow(tvshow)
+                .videoShow(tvshow)
                 .productionYear(String.valueOf(t.first_aired).substring(0, 4))
                 .build();
     }
@@ -408,53 +410,26 @@ public class Chilly {
     }
 
 
-    public String getTMDBImage(TraktGson.TraktElem t, String videoType, String imageType) {
 
-        String tmdb_url = "";
-        String img_url = "";
+    public Map<String, String> getTMDBImages(Video video) {
 
-        switch (videoType) {
-            case "movie":
-                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/movie/" + t.ids.get("tmdb") + "/images?language=en&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key); break;
-            case "show":
-                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/tv/" + t.ids.get("tmdb") + "/images?language=en&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key); break;
-//            case "season":
-//                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/movie/" + tvshow.tmdb_id + "/season/" + season.seasonNumber + "/images?language=en-US";
-
-        }
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder().url(tmdb_url).build();
-        try {
-            TMDBGson.TMDBElem tmdbElem = gson.fromJson(client.newCall(request).execute().body().string(), TMDBGson.TMDBElem.class);
-            switch (imageType) {
-                case "poster":
-                    return mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.posters.get(0).file_path;
-                case "backdrop":
-                    return mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.backdrops.get(0).file_path;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return img_url;
-
-    }
-
-
-    public String getTMDBImage(Video video, String imageType) {
-
-        String tmdb_url = "";
-        String img_url = "";
+        String tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url);
+        Map<String, String> images = new HashMap<>();
 
         switch (video.videoType) {
             case "movie":
-                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/movie/" + video.tmdb_id + "/images?language=en&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key); break;
+                tmdb_url += "/movie/" + video.tmdb_id; break;
             case "show":
-                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/tv/" + video.tmdb_id + "/images?language=en&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key); break;
-//            case "season":
-//                tmdb_url = mContext.getResources().getString(R.string.tmdb_api_url) + "/movie/" + tvshow.tmdb_id + "/season/" + season.seasonNumber + "/images?language=en-US";
+                tmdb_url += "/tv/" + video.tmdb_id; break;
+            case "season":
+                tmdb_url += "/tv/" + video.videoShow.tmdb_id + "/season/" + video.seasonNumber; break;
+            case "episode":
+                tmdb_url += "/tv/" + video.videoShow.tmdb_id + "/season/" + video.seasonNumber + "/episode/" + video.episodeNumber; break;
 
         }
+
+        tmdb_url += "/images?language=en&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key);
+
         System.out.println(tmdb_url);
         int cacheSize = 50 * 1024 * 1024; // 50 MiB
         Cache cache = new Cache(new File(mContext.getCacheDir().getPath()), cacheSize);
@@ -465,27 +440,27 @@ public class Chilly {
             Response response = client.newCall(request).execute();
             System.out.println(response.cacheResponse());
             TMDBGson.TMDBElem tmdbElem = gson.fromJson(response.body().string(), TMDBGson.TMDBElem.class);
-            switch (imageType) {
-                case "poster":
-                    img_url =  mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.posters.get(0).file_path;
-                    break;
-                case "backdrop":
-                    img_url =  mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.backdrops.get(0).file_path;
-                    break;
+
+            if(video.videoType.equals("episode")) {
+                images.put("poster", mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.stills.get(0).file_path);
+            } else {
+                images.put("poster", mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.posters.get(0).file_path);
             }
+
+            images.put("background", (mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.backdrops.get(0).file_path).replace("/w500/", "/w1000/"));
+
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        System.out.println(img_url);
-
-        return img_url;
+        System.out.println(images);
+        return images;
 
     }
 
 
     public String getFanartPoster(TraktGson.TraktElem t, String videoType) {
-        String poster = "TEST";
+        String poster = "";
         String fanart_url = "";
         switch(videoType) {
             case "movie":
