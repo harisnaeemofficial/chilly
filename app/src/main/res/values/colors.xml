@@ -15,15 +15,20 @@
      limitations under the License.
 -->
 <resources>
-    <color name="background_gradient_start">#ff00ff</color>
-    <color name="background_gradient_end">#ff00ff</color>
-    <color name="fastlane_background">#C30037</color>
-    <color name="search_opaque">#C32A2F</color>
-    <color name="selected_background">#FFC30037</color>
-    <color name="griditem_background">#C32A2F</color>
-    <color name="videodetails_background">#C30037</color>
+    <color name="background_gradient_start">#000000</color>
+    <color name="background_gradient_end">#000000</color>
+    <color name="fastlane_background">#AA1b252b</color>
+    <color name="search_opaque">#AA1b252b</color>
+    <color name="selected_background">#000000</color>
+    <color name="griditem_background">#AA000000</color>
+    <color name="videodetails_background">#AA000000</color>
 
-    <color name="default_background">#AAC30037</color>
+    <color name="default_background">#DD1b252b</color>
     <color name="icon_background">#C30037</color>
     <color name="icon_alt_background">#2A2F51</color>
+    <color name="lb_default_brand_color">#AA000000</color>
+    <color name="lb_default_brand_color_dark">#AA000000</color>
+    <color name="lb_default_search_icon_color">#AA000000</color>
+    <color name="background_color">#000000</color>
+    <color name="background">#000000</color>
 </resources>

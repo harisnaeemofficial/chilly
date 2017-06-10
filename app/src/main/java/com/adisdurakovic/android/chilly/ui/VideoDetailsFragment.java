@@ -382,6 +382,7 @@ public class VideoDetailsFragment extends DetailsFragment implements ChillyTasks
         if(Chilly.getInstance(getActivity().getApplicationContext()).userLoggedIn()){
             adapter.set(ACTION_TRAKT, new Action(ACTION_TRAKT, "TRAKT"));
         }
+
         row.setActionsAdapter(adapter);
 
         mAdapter.add(row);
