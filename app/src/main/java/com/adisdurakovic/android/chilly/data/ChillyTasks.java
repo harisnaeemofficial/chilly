@@ -624,6 +624,47 @@ public class ChillyTasks {
         }
     }
 
+    public interface VersionResponse {
+        void updateAvailable(String version);
+    }
+
+
+    public static class VersionTask extends AsyncTask<String, String, String> {
+
+        Context ctx;
+        String new_version;
+        String current_version;
+        VersionResponse delegate;
+        TraktGson.TraktUser user;
+
+
+        public VersionTask(Context ctx, VersionResponse del, String cv) {
+            this.ctx = ctx;
+            this.delegate = del;
+            this.current_version = cv;
+        }
+
+        // Before starting background thread Show Progress Dialog
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        // Checking login in background
+        protected String doInBackground(String... params) {
+
+            new_version = Chilly.getInstance(ctx).getVersion();
+            Chilly.getInstance(ctx).reauthTraktToken();
+            return "";
+
+        }
+
+        protected void onPostExecute(String somestring) {
+            if (!new_version.equals(current_version)) {
+                delegate.updateAvailable(new_version);
+            }
+        }
+    }
 
 
 

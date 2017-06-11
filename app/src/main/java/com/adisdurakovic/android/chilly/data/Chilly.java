@@ -822,7 +822,25 @@ public class Chilly {
         Map<String, String> params = new HashMap<>();
         params.put("client_id", mContext.getResources().getString(R.string.trakt_api_key));
         params.put("client_secret", mContext.getResources().getString(R.string.trakt_api_secret));
-        params.put("code", device_code);
+
+        String dc = device_code;
+        if(device_code.equals("reauth")) {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+            try {
+                JSONObject existing_token = new JSONObject(sharedPreferences.getString("trakt_token", ""));
+                dc = existing_token.getString("refresh_token");
+                String at = existing_token.getString("access_token");
+                params.put("refresh_token", dc);
+                params.put("access_token", dc);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        } else {
+            params.put("code", dc);
+        }
+
+
         JSONObject parameter = new JSONObject(params);
 
         RequestBody body = RequestBody.create(MediaType.parse("application/json"), parameter.toString());
@@ -834,16 +852,25 @@ public class Chilly {
 
         try {
             Response response = client.newCall(request).execute();
-            String res = response.body().string().toString();
-            return new JSONObject(res);
+            String res = response.body().string();
+            System.out.println(response.headers());
+            return new JSONObject(res.toString());
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
 
 
         return null;
 
 
+    }
+
+    public void reauthTraktToken() {
+        JSONObject reauth = getTokenFromTrakt("reauth");
+        if(reauth != null) {
+            saveSettings("trakt_token", reauth.toString());
+        }
+        System.out.println(reauth);
     }
 
 
@@ -955,6 +982,22 @@ public class Chilly {
 
 
         return media;
+    }
+
+    public String getVersion() {
+
+        String version = "";
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder().url("http://chilly.adisdurakovic.com/version.txt").build();
+        try {
+            version = client.newCall(request).execute().body().string();
+            System.out.println(version);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return version;
+
     }
 
 

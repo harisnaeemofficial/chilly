@@ -43,6 +43,7 @@ import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.view.View;
+import android.widget.Toast;
 
 import com.adisdurakovic.android.chilly.data.Chilly;
 import com.adisdurakovic.android.chilly.data.ChillyTasks;
@@ -65,7 +66,7 @@ import java.util.TimerTask;
 /*
  * Main class to show BrowseFragment with header and rows of videos
  */
-public class MainFragment extends BrowseFragment implements ChillyTasks.HomeLoaderResponse {
+public class MainFragment extends BrowseFragment implements ChillyTasks.HomeLoaderResponse, ChillyTasks.VersionResponse {
     private static final int BACKGROUND_UPDATE_DELAY = 300;
     private final Handler mHandler = new Handler();
     private ArrayObjectAdapter mCategoryRowAdapter;
@@ -100,7 +101,7 @@ public class MainFragment extends BrowseFragment implements ChillyTasks.HomeLoad
 //        prepareBackgroundManager();
 
 
-
+        new ChillyTasks.VersionTask(getActivity().getApplicationContext(), this, getResources().getString(R.string.app_version)).execute();
 
         // Map category results from the database to ListRow objects.
         // This Adapter is used to render the MainFragment sidebar labels.
@@ -123,6 +124,11 @@ public class MainFragment extends BrowseFragment implements ChillyTasks.HomeLoad
 
 
         updateRecommendations();
+    }
+
+    @Override
+    public void updateAvailable(String version) {
+        Toast.makeText(getActivity(), "New version ready for download: " + version, Toast.LENGTH_LONG).show();
     }
 
 

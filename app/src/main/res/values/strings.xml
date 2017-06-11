@@ -18,9 +18,10 @@
 
 <resources>
     <string name="app_name"><![CDATA[chill.y]]></string>
-    <string name="app_version">1.0.0</string>
+    <string name="app_version">1.0.0 Beta</string>
     <string name="app_date">2017-06-08</string>
     <string name="app_developer">Adis Durakovic</string>
+    <string name="app_website">https://chilly.adisdurakovic.com</string>
     <string name="browse_title"><![CDATA[Chilly]]></string>
     <string name="related_movies">Related Videos</string>
     <string name="tvshow_seasons">Seasons</string>
