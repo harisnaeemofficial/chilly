@@ -171,7 +171,9 @@ public class VerticalGridFragment extends android.support.v17.leanback.app.Verti
 //        more_tvshows.add(new ListElem("Browse TV Shows", "trakt-public-list", "show", "display-list", ""));
 //        mVideoAdapter.add(more_tvshows);
 
-        getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
+        if(mSpinnerFragment != null) {
+            getFragmentManager().beginTransaction().remove(mSpinnerFragment).commit();
+        }
     }
 
 

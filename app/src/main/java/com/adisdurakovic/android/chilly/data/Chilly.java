@@ -375,7 +375,6 @@ public class Chilly {
         return buildCommon(t)
                 .airedEpisodes(t.aired_episodes)
                 .videoType("season")
-                .cardImageUrl(getFanartPoster(t, "season"))
                 .productionYear(String.valueOf(t.first_aired).substring(0, 4))
                 .videoShow(tvshow)
                 .seasonNumber(String.valueOf(t.number))
@@ -430,15 +429,15 @@ public class Chilly {
 
         tmdb_url += "/images?language=en&api_key=" + mContext.getResources().getString(R.string.tmdb_api_key);
 
-        System.out.println(tmdb_url);
-        int cacheSize = 50 * 1024 * 1024; // 50 MiB
+        int cacheSize = 10 * 1024 * 1024; // 200 MiB
         Cache cache = new Cache(new File(mContext.getCacheDir().getPath()), cacheSize);
         OkHttpClient client = new OkHttpClient.Builder().cache(cache).readTimeout(1, TimeUnit.SECONDS).build();
-        Request request = new Request.Builder().url(tmdb_url).build();
+        Request request = new Request.Builder()
+                .url(tmdb_url)
+                .build();
 
         try {
             Response response = client.newCall(request).execute();
-            System.out.println(response.cacheResponse());
             TMDBGson.TMDBElem tmdbElem = gson.fromJson(response.body().string(), TMDBGson.TMDBElem.class);
 
             if(video.videoType.equals("episode")) {
@@ -453,159 +452,158 @@ public class Chilly {
             e.printStackTrace();
         }
 
-        System.out.println(images);
         return images;
 
     }
 
 
-    public String getFanartPoster(TraktGson.TraktElem t, String videoType) {
-        String poster = "";
-        String fanart_url = "";
-        switch(videoType) {
-            case "movie":
-                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + t.ids.get("tmdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
-                break;
-            case "show":
-                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + t.ids.get("tvdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
-                break;
-            case "season":
-                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
-                break;
-        }
-
-
-
-
-        int cacheSize = 50 * 1024 * 1024; // 50 MiB
-        Cache cache = new Cache(new File(mContext.getCacheDir().getPath()), cacheSize);
-
-        OkHttpClient client = new OkHttpClient.Builder().cache(cache).readTimeout(1, TimeUnit.SECONDS).build();
-
-        Request request = new Request.Builder().url(fanart_url).build();
-
-
-
-
-        try {
-            Response response = client.newCall(request).execute();
-            System.out.println(response.cacheResponse());
-            FanartGson.FanartElem fanartElem = gson.fromJson(response.body().string(), FanartGson.FanartElem.class);
-            switch(videoType) {
-                case "movie":
-                    for(FanartGson.FanartData f : fanartElem.movieposter) {
-                        if(!f.lang.equals("00")) {
-                            poster = f.url;
-                        }
-                        if(f.lang.equals("en")) {
-                            poster = f.url;
-                            break;
-                        }
-                    }
-                    break;
-                case "show":
-                    for(FanartGson.FanartData f : fanartElem.tvposter) {
-                        if(!f.lang.equals("00")) {
-                            poster = f.url;
-                        }
-                        if(f.lang.equals("en")) {
-                            poster = f.url;
-                            break;
-                        }
-                    }
-                    break;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        poster = poster.replace("/fanart/", "/preview/");
-        return poster;
-
-    }
-
-
-
-    public String getFanartPoster(Video video) {
-        String poster = "TEST";
-        String fanart_url = "";
-        switch(video.videoType) {
-            case "movie":
-                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + video.tmdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
-                break;
-            case "show":
-                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + video.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
-                break;
-            case "season":
-                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
-                break;
-        }
-
-        System.out.println(fanart_url);
-
-
-        int cacheSize = 50 * 1024 * 1024; // 50 MiB
-        Cache cache = new Cache(new File(mContext.getCacheDir().getPath()), cacheSize);
-
-        OkHttpClient client = new OkHttpClient.Builder().cache(cache).readTimeout(1, TimeUnit.SECONDS).build();
-
-        Request request = new Request.Builder().url(fanart_url).build();
-
-
-
-
-        try {
-            Response response = client.newCall(request).execute();
-            System.out.println(response.cacheResponse());
-            FanartGson.FanartElem fanartElem = gson.fromJson(response.body().string(), FanartGson.FanartElem.class);
-            switch(video.videoType) {
-                case "movie":
-                    for(FanartGson.FanartData f : fanartElem.movieposter) {
-                        if(!f.lang.equals("00")) {
-                            poster = f.url;
-                        }
-                        if(f.lang.equals("en")) {
-                            poster = f.url;
-                            break;
-                        }
-                    }
-                    break;
-                case "show":
-                    for(FanartGson.FanartData f : fanartElem.tvposter) {
-                        if(!f.lang.equals("00")) {
-                            poster = f.url;
-                        }
-                        if(f.lang.equals("en")) {
-                            poster = f.url;
-                            break;
-                        }
-                    }
-                    break;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        poster = poster.replace("/fanart/", "/preview/");
-        return poster;
-
-    }
-
-
-    private JSONObject getDataFromFanart(String url) {
-
-
-        JSONObject media = new JSONObject();
-
-
-
-//        try {
-//            media = new JSONObject(client.newCall(request).execute().body().string());
-//        } catch (Exception e) {
-//
+//    public String getFanartPoster(TraktGson.TraktElem t, String videoType) {
+//        String poster = "";
+//        String fanart_url = "";
+//        switch(videoType) {
+//            case "movie":
+//                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + t.ids.get("tmdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+//                break;
+//            case "show":
+//                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + t.ids.get("tvdb") + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+//                break;
+//            case "season":
+//                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+//                break;
 //        }
+//
+//
+//
+//
+//        int cacheSize = 50 * 1024 * 1024; // 50 MiB
+//        Cache cache = new Cache(new File(mContext.getCacheDir().getPath()), cacheSize);
+//
+//        OkHttpClient client = new OkHttpClient.Builder().cache(cache).readTimeout(1, TimeUnit.SECONDS).build();
+//
+//        Request request = new Request.Builder().url(fanart_url).build();
+//
+//
+//
+//
+//        try {
+//            Response response = client.newCall(request).execute();
+//            System.out.println(response.cacheResponse());
+//            FanartGson.FanartElem fanartElem = gson.fromJson(response.body().string(), FanartGson.FanartElem.class);
+//            switch(videoType) {
+//                case "movie":
+//                    for(FanartGson.FanartData f : fanartElem.movieposter) {
+//                        if(!f.lang.equals("00")) {
+//                            poster = f.url;
+//                        }
+//                        if(f.lang.equals("en")) {
+//                            poster = f.url;
+//                            break;
+//                        }
+//                    }
+//                    break;
+//                case "show":
+//                    for(FanartGson.FanartData f : fanartElem.tvposter) {
+//                        if(!f.lang.equals("00")) {
+//                            poster = f.url;
+//                        }
+//                        if(f.lang.equals("en")) {
+//                            poster = f.url;
+//                            break;
+//                        }
+//                    }
+//                    break;
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        poster = poster.replace("/fanart/", "/preview/");
+//        return poster;
+//
+//    }
 
 
-        return media;
-    }
+
+//    public String getFanartPoster(Video video) {
+//        String poster = "TEST";
+//        String fanart_url = "";
+//        switch(video.videoType) {
+//            case "movie":
+//                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/movies/" + video.tmdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+//                break;
+//            case "show":
+//                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + video.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+//                break;
+//            case "season":
+//                fanart_url = mContext.getResources().getString(R.string.fanart_api_url) + "/tv/" + tvshow.tvdb_id + "?api_key=" + mContext.getResources().getString(R.string.fanart_api_key);
+//                break;
+//        }
+//
+//        System.out.println(fanart_url);
+//
+//
+//        int cacheSize = 50 * 1024 * 1024; // 50 MiB
+//        Cache cache = new Cache(new File(mContext.getCacheDir().getPath()), cacheSize);
+//
+//        OkHttpClient client = new OkHttpClient.Builder().cache(cache).readTimeout(1, TimeUnit.SECONDS).build();
+//
+//        Request request = new Request.Builder().url(fanart_url).build();
+//
+//
+//
+//
+//        try {
+//            Response response = client.newCall(request).execute();
+//            System.out.println(response.cacheResponse());
+//            FanartGson.FanartElem fanartElem = gson.fromJson(response.body().string(), FanartGson.FanartElem.class);
+//            switch(video.videoType) {
+//                case "movie":
+//                    for(FanartGson.FanartData f : fanartElem.movieposter) {
+//                        if(!f.lang.equals("00")) {
+//                            poster = f.url;
+//                        }
+//                        if(f.lang.equals("en")) {
+//                            poster = f.url;
+//                            break;
+//                        }
+//                    }
+//                    break;
+//                case "show":
+//                    for(FanartGson.FanartData f : fanartElem.tvposter) {
+//                        if(!f.lang.equals("00")) {
+//                            poster = f.url;
+//                        }
+//                        if(f.lang.equals("en")) {
+//                            poster = f.url;
+//                            break;
+//                        }
+//                    }
+//                    break;
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        poster = poster.replace("/fanart/", "/preview/");
+//        return poster;
+//
+//    }
+
+
+//    private JSONObject getDataFromFanart(String url) {
+//
+//
+//        JSONObject media = new JSONObject();
+//
+//
+//
+////        try {
+////            media = new JSONObject(client.newCall(request).execute().body().string());
+////        } catch (Exception e) {
+////
+////        }
+//
+//
+//        return media;
+//    }
 
 
     private JSONArray getWatched(String type) {
@@ -739,8 +737,8 @@ public class Chilly {
             e.put("ids", ids);
             v.put(video.videoType, e);
             v.put("progress", 1);
-            v.put("app_version", mContext.getResources().getString(R.string.chilly_version));
-            v.put("app_date", mContext.getResources().getString(R.string.chilly_date));
+            v.put("app_version", mContext.getResources().getString(R.string.app_version));
+            v.put("app_date", mContext.getResources().getString(R.string.app_date));
 
             RequestBody body = RequestBody.create(MediaType.parse("application/json"), v.toString());
 

@@ -48,6 +48,7 @@ public class CardPresenter extends Presenter {
     private static Drawable mDefaultCardImage = null;
     private static Activity ctx;
     private static String bgUri = "";
+    private static ChillyTasks.ImageLoaderTask loader;
 
     public CardPresenter() {
 
@@ -78,17 +79,22 @@ public class CardPresenter extends Presenter {
 //            mCardView.getMainImageView().setScaleType(ImageView.ScaleType.CENTER);
 //            AsyncImageLoader.LoadImage(new CoverFetcher(mediaWrapper), mCardView);
 //            System.out.println(bgUri);
-            new ChillyTasks.ImageLoaderTask(ctx.getApplicationContext(), this, video).execute();
+            loader = (ChillyTasks.ImageLoaderTask) new ChillyTasks.ImageLoaderTask(ctx.getApplicationContext(), this, video).execute();
         }
 
         @Override
         public void onLoadFinish(Map<String, String> images, Video video) {
+            if(!ctx.isDestroyed()) {
                 Glide.with(mCardView.getContext())
                         .load(images.get("poster"))
                         .error(mDefaultCardImage)
                         .into(mCardView.getMainImageView());
+            } else {
+                loader.cancel(true);
+            }
 
         }
+
 
     }
 
