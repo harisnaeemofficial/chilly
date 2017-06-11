@@ -85,5 +85,12 @@ public class TraktGson {
         public long number;
     }
 
+    public class TraktUser {
+        public String username;
+        public String name;
+        public Map<String, Map<String, String>> images;
+        public Map<String, String> ids;
+    }
+
 }
 

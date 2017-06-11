@@ -172,6 +172,36 @@ public class Chilly {
 
     }
 
+    public TraktGson.TraktUser getTraktUser() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        String userstring = sharedPreferences.getString("trakt_user", "");
+        try {
+            JSONObject trakt_user = new JSONObject(userstring);
+            return  gson.fromJson(trakt_user.getJSONObject("user").toString(), TraktGson.TraktUser.class);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String getUserName() {
+
+        String ret = "";
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        String userstring = sharedPreferences.getString("trakt_user", "");
+        try {
+            JSONObject trakt_user = new JSONObject(userstring);
+            ret = trakt_user.getJSONObject("user").getString("username");
+
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return ret;
+
+
+    }
+
 
 
     public List<Video> getByFilter(ListElem elem, int limit) throws JSONException, IOException {
@@ -609,7 +639,7 @@ public class Chilly {
     private JSONArray getWatched(String type) {
         JSONArray watched = new JSONArray();
 
-        String url = mContext.getResources().getString(R.string.trakt_api_url) + "/users/" + getUserSlug() + "/watched/" + type;
+        String url = mContext.getResources().getString(R.string.trakt_api_url) + "/users/" + getTraktUser().ids.get("slug") + "/watched/" + type;
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()

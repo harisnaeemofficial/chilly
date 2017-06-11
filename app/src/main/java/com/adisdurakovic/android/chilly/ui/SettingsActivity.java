@@ -18,6 +18,7 @@ package com.adisdurakovic.android.chilly.ui;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.v7.preference.Preference;
 
 import com.adisdurakovic.android.chilly.R;
 

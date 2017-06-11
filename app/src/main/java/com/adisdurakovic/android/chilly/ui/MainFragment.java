@@ -272,7 +272,7 @@ public class MainFragment extends BrowseFragment implements ChillyTasks.HomeLoad
         movies.addAll(movies.size(), start_movies);
         tvshows.addAll(tvshows.size(), start_tvshows);
 
-        settings.add("Login");
+        settings.add("Preferences");
 
         mCategoryRowAdapter.add(new ListRow(header_movies, movies));
         prepareMoreMovieButtons(mCategoryRowAdapter.size());
@@ -394,10 +394,12 @@ public class MainFragment extends BrowseFragment implements ChillyTasks.HomeLoad
 //                getActivity().startActivity(intent, bundle);
             } else if (item instanceof String) {
 
-                if(item.equals("Login")) {
-                    LoginFragment loginFragment = new LoginFragment();
-                    getFragmentManager().beginTransaction().replace(R.id.main_frame, loginFragment)
-                            .addToBackStack(null).commit();
+                if(item.equals("Preferences")) {
+                    Intent intent = new Intent(getActivity(), SettingsActivity.class);
+                    Bundle bundle =
+                            ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+                                    .toBundle();
+                    startActivity(intent, bundle);
                 }
 
             } else if (item instanceof ListElem) {

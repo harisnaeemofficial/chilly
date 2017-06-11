@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
      Copyright (C) 2014 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,13 +14,13 @@
      limitations under the License.
 -->
 
-    <!DOCTYPE resources [
-        <!ENTITY trakt_api_url_base "https://api.trakt.tv">
-        <!ENTITY fanart_api_url_base "http://webservice.fanart.tv/v3">
-    ]>
+<!DOCTYPE resources [<!ENTITY trakt_api_url_base "https://api.trakt.tv"><!ENTITY fanart_api_url_base "http://webservice.fanart.tv/v3">]>
 
 <resources>
-    <string name="app_name"><![CDATA[Chilly]]></string>
+    <string name="app_name"><![CDATA[chill.y]]></string>
+    <string name="app_version">1.0.0</string>
+    <string name="app_date">2017-06-08</string>
+    <string name="app_developer">Adis Durakovic</string>
     <string name="browse_title"><![CDATA[Chilly]]></string>
     <string name="related_movies">Related Videos</string>
     <string name="tvshow_seasons">Seasons</string>
@@ -58,9 +57,8 @@
     <string name="no_search_results">No search results found for \'%1$s\'</string>
     <string name="catalog_url">https://codecraft.at/tv.json</string>
 
-    <string name="chilly_version">1.0.0</string>
     <!-- y-m-d -->
-    <string name="chilly_date">2017-06-08</string>
+
 
     <!--IMDB -->
     <string name="imdb_url_movies_popular"><![CDATA[http://www.imdb.com/search/title?title_type=feature,tv_movie&num_votes=1000,&production_status=released&release_date=date%5B365%5D,date%5B60%5D&count=10&start=1&view=advanced&sort=moviemeter,asc]]></string>
@@ -154,7 +152,11 @@
     <string name="onboarding_description_design">The Leanback sample shows how to quickly design apps designed for a 10-foot user interface</string>
     <string name="onboarding_description_simple">You can include the Leanback library through gradle in your own apps</string>
     <string name="onboarding_description_project">Are you looking for guidance? This sample is available on GitHub so you can see how we built this.</string>
-    <string name="pref_title_settings">App Settings</string>
+    <string name="pref_title_settings">Preferences</string>
+    <string name="pref_title_info">Info</string>
+    <string name="pref_title_version">Version</string>
+    <string name="pref_title_date">Date</string>
+    <string name="pref_title_developer">Developer</string>
     <string name="pref_title_recommendations">Recommendations</string>
     <string name="pref_key_recommendations">pref_recommendations</string>
     <string name="pref_key_screen_general">general_settings</string>
@@ -164,10 +166,14 @@
     <string name="pref_title_login_description">Please enter your username and password</string>
     <string name="pref_title_username">Username</string>
     <string name="pref_title_password">Password</string>
+    <string name="pref_title_trakt">Trakt</string>
     <string name="pref_key_login">pref_login</string>
     <string name="pref_title_login">Login</string>
 
 
     <string name="playback_getsources">Fetching sources...</string>
     <string name="playback_nosources">No sources found!</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

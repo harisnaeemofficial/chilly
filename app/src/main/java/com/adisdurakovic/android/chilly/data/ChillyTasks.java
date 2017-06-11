@@ -1,10 +1,12 @@
 package com.adisdurakovic.android.chilly.data;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.ImageCardView;
 
+import com.adisdurakovic.android.chilly.model.TraktGson;
 import com.adisdurakovic.android.chilly.model.Video;
 import com.adisdurakovic.android.chilly.stream.StreamGrabber;
 import com.adisdurakovic.android.chilly.stream.StreamSource;
@@ -12,6 +14,8 @@ import com.adisdurakovic.android.chilly.stream.StreamSource;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -530,17 +534,30 @@ public class ChillyTasks {
         }
     }
 
+    public interface TraktResponse {
+        void onUserGet(TraktGson.TraktUser user, Drawable icon);
+    }
+
 
     public static class TraktTask extends AsyncTask<String, String, String> {
 
         Context ctx;
         String action;
         Video v;
+        TraktResponse delegate;
+        TraktGson.TraktUser user;
+        Drawable icon = null;
 
         public TraktTask(Context ctx, String action, Video video) {
             this.action = action;
             this.v = video;
             this.ctx = ctx;
+        }
+
+        public TraktTask(Context ctx, TraktResponse del, String action) {
+            this.action = action;
+            this.ctx = ctx;
+            this.delegate = del;
         }
 
         // Before starting background thread Show Progress Dialog
@@ -564,15 +581,29 @@ public class ChillyTasks {
                 case "mark-as-watched":
                     Chilly.getInstance(ctx).markAsWatched(v);
                     break;
+                case "get-user-name":
+                    user = Chilly.getInstance(ctx).getTraktUser();
+
+                    try {
+                        InputStream is = (InputStream)new URL(user.images.get("avatar").get("full")).getContent();
+                        icon = Drawable.createFromStream(is, "src name");
+                    } catch (Exception e) {
+                        System.out.println("Exc=" + e);
+                    }
+
+
             }
 
             return "";
 
         }
 
+
         // After completing background task Dismiss the progress dialog
         protected void onPostExecute(String somestring) {
-//        delegate.onListGrab(list, title, subtitle, item.video);
+            if(delegate != null) {
+                delegate.onUserGet(user, icon);
+            }
         }
     }
 
