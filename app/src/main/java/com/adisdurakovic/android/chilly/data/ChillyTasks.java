@@ -547,11 +547,19 @@ public class ChillyTasks {
         TraktResponse delegate;
         TraktGson.TraktUser user;
         Drawable icon = null;
+        double progress;
 
         public TraktTask(Context ctx, String action, Video video) {
             this.action = action;
             this.v = video;
             this.ctx = ctx;
+        }
+
+        public TraktTask(Context ctx, String action, Video video, double progress) {
+            this.action = action;
+            this.v = video;
+            this.ctx = ctx;
+            this.progress = progress;
         }
 
         public TraktTask(Context ctx, TraktResponse del, String action) {
@@ -580,6 +588,15 @@ public class ChillyTasks {
                     break;
                 case "mark-as-watched":
                     Chilly.getInstance(ctx).markAsWatched(v);
+                    break;
+                case "scrobble-play":
+                    Chilly.getInstance(ctx).scrobble("start", v, progress);
+                    break;
+                case "scrobble-pause":
+                    Chilly.getInstance(ctx).scrobble("pause", v, progress);
+                    break;
+                case "scrobble-stop":
+                    Chilly.getInstance(ctx).scrobble("stop", v, progress);
                     break;
                 case "get-user-name":
                     user = Chilly.getInstance(ctx).getTraktUser();

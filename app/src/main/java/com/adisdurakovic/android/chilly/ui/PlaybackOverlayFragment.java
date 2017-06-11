@@ -19,6 +19,7 @@ package com.adisdurakovic.android.chilly.ui;
 import static android.support.v4.media.session.MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS;
 import static android.support.v4.media.session.MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS;
 
+import com.adisdurakovic.android.chilly.data.ChillyTasks;
 import com.adisdurakovic.android.chilly.stream.StreamGrabber;
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.util.Util;
@@ -163,6 +164,7 @@ public class PlaybackOverlayFragment
     public void onStop() {
         super.onStop();
 
+        new ChillyTasks.TraktTask(getActivity().getApplicationContext(), "scrobble-stop", mSelectedVideo, getProgress(mPlayer.getDuration(), mPlayer.getDuration())).execute();
         mSession.release();
         releasePlayer();
     }
@@ -174,6 +176,7 @@ public class PlaybackOverlayFragment
         if (mMediaController != null) {
             mMediaController.unregisterCallback(mMediaControllerCallback);
         }
+
         mSession.release();
         releasePlayer();
     }
@@ -450,6 +453,14 @@ public class PlaybackOverlayFragment
             mPlayer.getPlayerControl().start();
             setPlaybackState(PlaybackState.STATE_PLAYING);
         }
+        new ChillyTasks.TraktTask(getActivity().getApplicationContext(), "scrobble-play", mSelectedVideo, getProgress(mPlayer.getDuration(), mPlayer.getDuration())).execute();
+    }
+
+    private double getProgress(long pos, long dur) {
+        if(dur > pos) {
+            return (double) 100/dur * pos;
+        }
+        return 0;
     }
 
     private void pause() {
@@ -463,6 +474,7 @@ public class PlaybackOverlayFragment
             mPlayer.getPlayerControl().pause();
             setPlaybackState(PlaybackState.STATE_PAUSED);
         }
+        new ChillyTasks.TraktTask(getActivity().getApplicationContext(), "scrobble-pause", mSelectedVideo, getProgress(mPlayer.getDuration(), mPlayer.getDuration())).execute();
     }
 
     private void requestAudioFocus() {

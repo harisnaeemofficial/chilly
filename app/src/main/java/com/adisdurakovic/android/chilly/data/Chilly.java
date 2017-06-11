@@ -754,57 +754,34 @@ public class Chilly {
     }
 
     public void markAsWatched(Video video) {
-        String url = mContext.getResources().getString(R.string.trakt_api_url) + "/scrobble/start";
+        scrobble("start", video, 0);
+        scrobble("stop", video, 100);
+
+    }
+
+    public void scrobble(String type, Video v, double progress) {
         OkHttpClient client = new OkHttpClient();
 
-        JSONObject v = new JSONObject();
-        JSONObject va = new JSONObject();
-        JSONObject e = new JSONObject();
-        JSONObject ids = new JSONObject();
+
+        String url = mContext.getResources().getString(R.string.trakt_api_url) + "/scrobble/" + type;
+        String b = "{\"" + v.videoType + "\": {\"ids\": {\"trakt\": " + v.id + "}}, \"progress\": " + progress + ", \"app_version\": \"" + mContext.getResources().getString(R.string.app_version) + "\", \"app_date\": \"" + mContext.getResources().getString(R.string.app_date) + "\"}";
+        RequestBody body = RequestBody.create(MediaType.parse("application/json"), b);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Authorization", "Bearer " + getAccessToken())
+                .addHeader("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version))
+                .addHeader("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key))
+                .post(body)
+                .build();
 
         try {
-            ids.put("trakt", video.id);
-            e.put("ids", ids);
-            v.put(video.videoType, e);
-            v.put("progress", 1);
-            v.put("app_version", mContext.getResources().getString(R.string.app_version));
-            v.put("app_date", mContext.getResources().getString(R.string.app_date));
-
-            RequestBody body = RequestBody.create(MediaType.parse("application/json"), v.toString());
-
-            Request request = new Request.Builder()
-                    .url(url)
-                    .addHeader("Content-Type", "application/json")
-                    .addHeader("Authorization", "Bearer " + getAccessToken())
-                    .addHeader("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version))
-                    .addHeader("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key))
-                    .post(body)
-                    .build();
-
             Response response = client.newCall(request).execute();
-
-
-            v.remove("progress");
-            v.put("progress", 99);
-            body = RequestBody.create(MediaType.parse("application/json"), v.toString());
-            url = mContext.getResources().getString(R.string.trakt_api_url) + "/scrobble/stop";
-
-            request = new Request.Builder()
-                    .url(url)
-                    .addHeader("Content-Type", "application/json")
-                    .addHeader("Authorization", "Bearer " + getAccessToken())
-                    .addHeader("trakt-api-version", mContext.getResources().getString(R.string.trakt_api_version))
-                    .addHeader("trakt-api-key", mContext.getResources().getString(R.string.trakt_api_key))
-                    .post(body)
-                    .build();
-
-            response = client.newCall(request).execute();
-
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            System.out.println(response.body().string());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
 
 
     }
