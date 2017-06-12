@@ -23,12 +23,11 @@
     <color name="griditem_background">#AA000000</color>
     <color name="videodetails_background">#AA000000</color>
 
-    <color name="default_background">#DD1b252b</color>
+    <color name="default_background">#1b252b</color>
     <color name="icon_background">#C30037</color>
     <color name="icon_alt_background">#2A2F51</color>
-    <color name="lb_default_brand_color">#AA000000</color>
-    <color name="lb_default_brand_color_dark">#AA000000</color>
-    <color name="lb_default_search_icon_color">#AA000000</color>
+    <color name="lb_default_brand_color">#000000</color>
+    <color name="lb_default_brand_color_dark">#000000</color>
     <color name="background_color">#000000</color>
     <color name="background">#000000</color>
 </resources>
