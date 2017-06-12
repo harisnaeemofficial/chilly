@@ -51,7 +51,7 @@ public class VideoDbUnitTest {
         JSONObject myMedia = new JSONObject();
         JSONArray mediaCategories = new JSONArray();
         mediaCategories.put(myMediaGooglePlus);
-        myMedia.put(VideoDbBuilder.TAG_GOOGLE_VIDEOS, mediaCategories);
+        myMedia.put("videos", mediaCategories);
 
         VideoDbBuilder videoDbBuilder = new VideoDbBuilder();
         List<ContentValues> contentValuesList = videoDbBuilder.buildMedia(myMedia);
@@ -89,7 +89,7 @@ public class VideoDbUnitTest {
     public void getVideosFromServer() throws IOException, JSONException {
         String serverUrl = "https://storage.googleapis.com/android-tv/android_tv_videos_new.json";
         VideoDbBuilder videoDbBuilder = new VideoDbBuilder();
-        List<ContentValues> contentValuesList = videoDbBuilder.fetch(serverUrl);
+        List<ContentValues> contentValuesList = videoDbBuilder.fetch();
         Assert.assertTrue(contentValuesList.size() > 0);
         Assert.assertTrue(!contentValuesList.get(0)
             .getAsString(VideoContract.VideoEntry.COLUMN_NAME).isEmpty());

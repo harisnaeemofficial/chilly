@@ -125,7 +125,7 @@ public class VideoDbIntegrationTest extends ActivityInstrumentationTestCase2<Mai
         JSONObject myMedia = new JSONObject();
         JSONArray mediaCategories = new JSONArray();
         mediaCategories.put(myMediaGooglePlus);
-        myMedia.put(VideoDbBuilder.TAG_GOOGLE_VIDEOS, mediaCategories);
+        myMedia.put("videos", mediaCategories);
 
         VideoDbBuilder videoDbBuilder = new VideoDbBuilder(getActivity());
         List<ContentValues> contentValuesList = videoDbBuilder.buildMedia(myMedia);
@@ -187,7 +187,7 @@ public class VideoDbIntegrationTest extends ActivityInstrumentationTestCase2<Mai
 
         // Create some test videos
         VideoDbBuilder videoDbBuilder = new VideoDbBuilder(getActivity());
-        List<ContentValues> contentValuesList = videoDbBuilder.fetch(getActivity().getResources().getString(R.string.catalog_url));
+        List<ContentValues> contentValuesList = videoDbBuilder.fetch();
         // Insert into database
         ContentValues[] downloadedVideoContentValues = contentValuesList.toArray(new ContentValues[contentValuesList.size()]);
         getActivity().getContentResolver().bulkInsert(VideoContract.VideoEntry.CONTENT_URI,
