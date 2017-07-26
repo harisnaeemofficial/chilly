@@ -274,7 +274,6 @@ public class MainFragment extends BrowseFragment implements ChillyTasks.HomeLoad
         ArrayObjectAdapter movies = new ArrayObjectAdapter(new CardPresenter(getActivity()));
         ArrayObjectAdapter tvshows = new ArrayObjectAdapter(new CardPresenter(getActivity()));
         ArrayObjectAdapter settings = new ArrayObjectAdapter(new GridItemPresenter());
-
         movies.addAll(movies.size(), start_movies);
         tvshows.addAll(tvshows.size(), start_tvshows);
 

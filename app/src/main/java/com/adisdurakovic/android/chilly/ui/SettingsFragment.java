@@ -57,7 +57,7 @@ public class SettingsFragment extends LeanbackSettingsFragment
     @Override
     public void onUserGet(TraktGson.TraktUser user, Drawable icon) {
         Preference pref = findPreference(getString(R.string.pref_key_login));
-        if(pref != null) {
+        if(pref != null && user != null) {
             pref.setTitle("Logged in as: " + user.username);
             pref.setSummary("Click for re-outh");
             if(icon != null) {

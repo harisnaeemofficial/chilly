@@ -175,6 +175,7 @@ public class Chilly {
     public TraktGson.TraktUser getTraktUser() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
         String userstring = sharedPreferences.getString("trakt_user", "");
+        if(userstring.equals("")) return null;
         try {
             JSONObject trakt_user = new JSONObject(userstring);
             return  gson.fromJson(trakt_user.getJSONObject("user").toString(), TraktGson.TraktUser.class);
@@ -476,7 +477,11 @@ public class Chilly {
                 images.put("poster", mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.posters.get(0).file_path);
             }
 
-            images.put("background", (mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.backdrops.get(0).file_path).replace("/w500/", "/w1000/"));
+            if(tmdbElem.backdrops.size() > 0) {
+                images.put("background", (mContext.getResources().getString(R.string.tmdb_image_url) + tmdbElem.backdrops.get(0).file_path).replace("/w500/", "/w1000/"));
+            } else {
+                images.put("background", "https://static.pexels.com/photos/30732/pexels-photo-30732.jpg");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -637,7 +642,11 @@ public class Chilly {
 
 
     private JSONArray getWatched(String type) {
+
+
+
         JSONArray watched = new JSONArray();
+        if(getTraktUser() == null) return watched;
 
         String url = mContext.getResources().getString(R.string.trakt_api_url) + "/users/" + getTraktUser().ids.get("slug") + "/watched/" + type;
 
@@ -826,8 +835,10 @@ public class Chilly {
         String dc = device_code;
         if(device_code.equals("reauth")) {
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+            String trakt_token = sharedPreferences.getString("trakt_token", "");
+            if(trakt_token.equals("")) return null;
             try {
-                JSONObject existing_token = new JSONObject(sharedPreferences.getString("trakt_token", ""));
+                JSONObject existing_token = new JSONObject(trakt_token);
                 dc = existing_token.getString("refresh_token");
                 String at = existing_token.getString("access_token");
                 params.put("refresh_token", dc);
@@ -853,7 +864,6 @@ public class Chilly {
         try {
             Response response = client.newCall(request).execute();
             String res = response.body().string();
-            System.out.println(response.headers());
             return new JSONObject(res.toString());
         } catch (Exception e) {
             e.printStackTrace();

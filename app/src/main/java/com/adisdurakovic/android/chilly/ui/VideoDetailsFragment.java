@@ -132,10 +132,16 @@ public class VideoDetailsFragment extends DetailsFragment implements ChillyTasks
 
     @Override
     public void onStreamGrab(List<StreamSource> sources) {
-        mSelectedVideo.videoUrl = sources.get(0).url;
-        Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
-        intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
-        startActivity(intent);
+        if(sources.size() > 0) {
+            System.out.println(sources.get(0).url);
+            mSelectedVideo.videoUrl = sources.get(0).url;
+            Intent intent = new Intent(getActivity(), PlaybackOverlayActivity.class);
+            intent.putExtra(VideoDetailsActivity.VIDEO, mSelectedVideo);
+            startActivity(intent);
+        } else {
+            Toast.makeText(getActivity().getApplicationContext(), "No Sources found!", Toast.LENGTH_SHORT).show();
+        }
+
     }
 
     @Override

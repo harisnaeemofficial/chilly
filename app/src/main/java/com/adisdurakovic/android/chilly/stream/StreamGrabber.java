@@ -25,11 +25,13 @@ public class StreamGrabber {
 
         List<StreamProvider> stream_provider = new ArrayList<>();
 
-        stream_provider.add(new Stream_123movieshd());
-        stream_provider.add(new Stream_miradetodo());
-        stream_provider.add(new Stream_dayt());
-        stream_provider.add(new Stream_sezonlukdizi());
+//        stream_provider.add(new Stream_123movieshd());
+//        stream_provider.add(new Stream_miradetodo());
+//        stream_provider.add(new Stream_dayt());
+//        stream_provider.add(new Stream_sezonlukdizi());
+//        stream_provider.add(new Stream_istream());
 //        stream_provider.add(new Stream_dizigold());
+        stream_provider.add(new Stream_putlocker());
 
         for(Iterator<StreamProvider> i = stream_provider.iterator(); i.hasNext();) {
             StreamProvider provider = i.next();
