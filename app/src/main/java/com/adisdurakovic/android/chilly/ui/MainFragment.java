@@ -194,9 +194,8 @@ public class MainFragment extends BrowseFragment implements ChillyTasks.HomeLoad
 
     private boolean hasValidTraktToken() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-        String string_token = sharedPreferences.getString("trakt_token", "NOTOKEN");
-
-        return !string_token.equals("NOTOKEN");
+        String string_token = sharedPreferences.getString("trakt_token", "");
+        return !string_token.equals("");
     }
 
     @Override
@@ -409,7 +408,6 @@ public class MainFragment extends BrowseFragment implements ChillyTasks.HomeLoad
 
             } else if (item instanceof ListElem) {
 
-                System.out.println(((ListElem) item).action);
 
                 if(((ListElem) item).action.equals("display-list")) {
                     Intent intent = new Intent(getActivity(), ListSelectActivity.class);
@@ -417,7 +415,6 @@ public class MainFragment extends BrowseFragment implements ChillyTasks.HomeLoad
                     Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity()).toBundle();
                     startActivity(intent, bundle);
                 } else if(((ListElem) item).action.equals("display-videos")) {
-                    System.out.println("HERE");
                     Intent intent = new Intent(getActivity(), VerticalGridActivity.class);
                     intent.putExtra("listElem",((ListElem) item));
                     Bundle bundle =
